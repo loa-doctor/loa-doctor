@@ -18,5 +18,5 @@ app.get("/health", (req, res) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`${PORT}포트 수신중`);
+  console.log(`${PORT}포트 수신중..`);
 });
