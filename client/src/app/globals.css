@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 기본 리셋 / 테스트용 */
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
