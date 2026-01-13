@@ -1,13 +1,16 @@
-import './globals.css';
+import './globals.css'
+import type { ReactNode } from 'react'
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode
 }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body className="bg-black text-white">
+        {children}
+      </body>
     </html>
-  );
+  )
 }
