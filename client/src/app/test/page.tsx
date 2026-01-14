@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createWorker, Worker, OEM, PSM } from 'tesseract.js'
 
 type Aspect = '16:9' | '21:9' | 'UNKNOWN'
 
@@ -108,6 +109,12 @@ export default function Test() {
   const fullCanvasRef = useRef<HTMLCanvasElement | null>(null) // 디버그 미니맵용
   const gameCanvasRef = useRef<HTMLCanvasElement | null>(null) // 실제 출력(크롭)
 
+  //tesseract.js
+  const ocrCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const workerRef = useRef<Worker | null>(null)
+
+  const [lineText, setLineText] = useState<string>('—')
+
   // 상태
   const [aspect, setAspect] = useState<Aspect>('UNKNOWN')
   const [debugOn, setDebugOn] = useState(true)
@@ -128,6 +135,65 @@ export default function Test() {
     () => ({ scale, padX, padY, offXRatio, offYRatio }),
     [scale, padX, padY, offXRatio, offYRatio]
   )
+
+  // OCR ROI (tuned 기준 비율)
+  const [roiX, setRoiX] = useState(0.15)
+  const [roiY, setRoiY] = useState(0.27)
+  const [roiW, setRoiW] = useState(0.7)
+  const [roiH, setRoiH] = useState(0.4)
+
+  function getLineROI(tuned: Rect) {
+    return {
+      rx: Math.round(tuned.w * roiX),
+      ry: Math.round(tuned.h * roiY),
+      rw: Math.round(tuned.w * roiW),
+      rh: Math.round(tuned.h * roiH),
+    }
+  }
+
+  const [realTxt, setRealTxt] = useState('')
+
+  function extractBossLineNumber(text: string): number | null {
+    // 공백을 제거하고 숫자만 추출
+    const numbersOnly = text.replace(/[^0-9]/g, '')
+    console.log('추출된 숫자:', numbersOnly)
+    setRealTxt(numbersOnly)
+    return numbersOnly.length > 0 ? Number(numbersOnly) : null
+  }
+
+  useEffect(() => {
+    let mounted = true
+
+    ;(async () => {
+      const worker = await createWorker('eng', OEM.DEFAULT, {
+        logger: () => {},
+      })
+
+      // useEffect 내 worker 설정 부분
+      // await worker.setParameters({
+      //   // PSM.SINGLE_WORD (8) 또는 PSM.RAW_LINE (13) 시도
+      //   tessedit_pageseg_mode: PSM.SINGLE_WORD,
+      //   // 화이트리스트를 완전히 제거하거나 아주 넓게 잡아서 패턴 인식을 돕습니다.
+      //   tessedit_char_whitelist: '0123456789X',
+      // });
+
+      if (mounted) {
+        workerRef.current = worker
+      }
+    })()
+
+    return () => {
+      mounted = false
+      workerRef.current?.terminate()
+      workerRef.current = null
+    }
+  }, [])
+
+  const ocrBufferRef = useRef<number[]>([])
+
+  const stableLineRef = useRef<number | null>(null)
+  const candidateLineRef = useRef<number | null>(null)
+  const sameCountRef = useRef(0)
 
   /* =============================
    * 화면 공유 시작
@@ -305,6 +371,114 @@ export default function Test() {
     return () => clearInterval(timer)
   }, [debugOn, phase, displayRect, lockedRect, tuning, aspect])
 
+  /* =============================
+   * OCR 루프 (보스 줄 수 읽기)
+   * - LOCKED 상태에서만
+   * - 1초 주기
+   * ============================= */
+  useEffect(() => {
+    if (phase !== 'LOCKED') return
+    if (!workerRef.current || !lockedRect || !videoRef.current) return
+
+    const video = videoRef.current
+    let timer: number | null = null
+
+    if (!ocrCanvasRef.current) {
+      ocrCanvasRef.current = document.createElement('canvas')
+    }
+
+    const ocrCanvas = ocrCanvasRef.current
+    const ocrCtx = ocrCanvas.getContext('2d')!
+
+    const runOCR = async () => {
+      if (!video.videoWidth || !video.videoHeight) return
+
+      const tuned = applyTuning(lockedRect, video.videoWidth, video.videoHeight, tuning)
+
+      // 줄 수 ROI
+      const { rx, ry, rw, rh } = getLineROI(tuned)
+
+      // 너무 작으면 OCR 금지 (에러 방지)
+      if (rw < 10 || rh < 10) return
+
+      const scaleOCR = 4
+      ocrCanvas.width = rw * scaleOCR
+      ocrCanvas.height = rh * scaleOCR
+
+      if (ocrCanvas.width < 30 || ocrCanvas.height < 30) return
+
+      ocrCtx.imageSmoothingEnabled = true // 부드럽게 확대되도록 변경
+      ocrCtx.clearRect(0, 0, ocrCanvas.width, ocrCanvas.height)
+      // runOCR 함수 내 필터 수정
+      ocrCtx.filter = 'grayscale(100%) contrast(110%) brightness(80%)'
+      ocrCtx.drawImage(
+        video,
+        tuned.x + rx,
+        tuned.y + ry,
+        rw,
+        rh,
+        0,
+        0,
+        ocrCanvas.width,
+        ocrCanvas.height
+      )
+      ocrCtx.filter = 'none' // 필터 초기화
+      try {
+        const res = await workerRef.current!.recognize(ocrCanvas)
+        console.log('RAW TEXT:', res.data.text) // 무엇이라도 찍히는지 확인
+
+        // if (confidence < 70) return; // 테스트를 위해 잠시 주석 처리
+        const raw = res.data.text || ''
+        const confidence = res.data.confidence ?? 0
+        console.log(confidence)
+        console.log(res.data)
+        if (confidence < 50) return
+
+        const num = extractBossLineNumber(raw)
+        if (num == null) return
+
+        const stable = stableLineRef.current
+
+        // 최초 확정
+        if (stable == null) {
+          stableLineRef.current = num
+          setLineText(String(num))
+          return
+        }
+
+        // 후보 처리
+        // OCR 결과 누적
+        ocrBufferRef.current.push(num)
+        if (ocrBufferRef.current.length > 5) {
+          ocrBufferRef.current.shift()
+        }
+
+        // 최빈값 계산
+        const counts: Record<number, number> = {}
+        for (const v of ocrBufferRef.current) {
+          counts[v] = (counts[v] || 0) + 1
+        }
+
+        const [best, freq] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+
+        // 3프레임 이상 같으면 확정
+        if (freq >= 3) {
+          stableLineRef.current = Number(best)
+          setLineText(best)
+        }
+      } catch {
+        // OCR 실패 무시
+      }
+    }
+
+    runOCR()
+    timer = window.setInterval(runOCR, 1000)
+
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [phase, lockedRect, tuning])
+
   return (
     <div className="p-6 space-y-5">
       <div className="flex items-center gap-3">
@@ -326,9 +500,26 @@ export default function Test() {
           <span className="font-semibold text-red-600">{aspect}</span>
         </div>
       </div>
-
+      <div className="ml-auto text-sm space-x-4">
+        <span>
+          상태: <b>{phase}</b>
+        </span>
+        <span>
+          비율: <b className="text-red-600">{aspect}</b>
+        </span>
+        <span>
+          보스 줄 수: <b className="text-green-400 text-lg">{lineText}</b>
+        </span>
+        <span>
+          읽은 글자: <b className="text-black-400 text-lg">{realTxt}</b>
+        </span>
+      </div>
       <video ref={videoRef} className="hidden" />
-
+      {/* OCR 실제 입력 캔버스 */}
+      <div className="space-y-2 max-w-md">
+        <p className="font-semibold text-red-500">OCR 입력 캔버스 (실제 인식 영역)</p>
+        <canvas ref={ocrCanvasRef} className="border border-red-500 w-full bg-black" />
+      </div>
       {/* 메인: 사각형(게임 화면)만 */}
       <div className="space-y-2">
         <p className="font-semibold">게임 화면 (사각형 크롭 결과)</p>
