@@ -54,7 +54,7 @@ export default function HomePage() {
 
           <div className="inline-block px-4 py-1.5 mb-6 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-medium">
 
-            실시간 로스트아크 패턴 분석기
+            실시간 로스트아크 레이드 공략
 
           </div>
 
@@ -72,12 +72,11 @@ export default function HomePage() {
 
           <p className="text-lg text-slate-400 mb-10 max-w-2xl leading-relaxed">
 
-            LOA Doctor는 보스의 HP 수치를 기반으로, <br />
+            LOA Doctor는 보스의 체력을 실시간으로 분석하여, <br />
             
-            레이드의 공략을 실시간으로 표시합니다. <br />
+            다음 기믹과 공략 정보를 즉시 표시합니다. <br />
 
-            이제 공략을 외우지 말고, 화면 옆 PiP 창을 보며 판단에만 집중하세요.
-
+            기믹을 놓치지 않고 완벽한 공략을 경험하세요!
           </p>
 
 
