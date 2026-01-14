@@ -11,32 +11,79 @@ const RAIDS = {
   '아브렐슈드': ['1관문', '2관문'],
 }
 
-const STRATEGY_DATA: Record<string, any> = {
-  '카멘-3관문': {
-    hpPhase: "280줄 ~ 240줄",
-    hint: "격돌 패턴 준비. 파란색 검기는 안쪽이 안전합니다.",
-  },
-}
+// --- HP 바 크롭 설정 (해상도 비율 기반) ---
+const HP_BAR_CONFIG = {
+  roiX: 0.3,      // 가로 30% 지점 시작
+  roiY: 0.075,    // 세로 7.5% 지점 시작
+  roiWidth: 0.4,  // 가로 폭 40%
+  roiHeight: 0.05 // 세로 폭 5%
+};
 
 export default function AnalyzePage() {
   const router = useRouter()
-  const videoRef = useRef<HTMLVideoElement>(null)
+  
+  // Refs: 초기값을 null로 설정하고 정확한 타입을 지정합니다.
+  const videoRef = useRef<HTMLVideoElement | null>(null)
   const pipWindowRef = useRef<Window | null>(null)
+  const cropCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
+  // 상태 관리
   const [isCapturing, setIsCapturing] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false) 
   const [selectedRaid, setSelectedRaid] = useState('카멘')
   const [selectedGate, setSelectedGate] = useState('3관문')
+  const [currentHP, setCurrentHP] = useState<number>(0)
+  
   const [currentGuide, setCurrentGuide] = useState({
     hpPhase: "분석 대기 중",
-    hint: "레이드와 관문을 선택하고 PiP를 실행하세요."
+    hint: "레이드와 관문을 선택하고 분석을 시작하세요."
   })
 
-  useEffect(() => {
-    const data = STRATEGY_DATA[`${selectedRaid}-${selectedGate}`];
-    if (data) setCurrentGuide(data);
-    else setCurrentGuide({ hpPhase: "정보 없음", hint: "공략 데이터가 준비 중입니다." });
-  }, [selectedRaid, selectedGate]);
+  // --- 1. 백엔드 분석 요청 (Stub) ---
+  const requestServerAnalysis = async (imageBase64: string) => {
+    // TODO: 실제 백엔드 연동 시 fetch 로직 작성
+  }
 
+  // --- 2. 프레임 크롭 프로세서 (에러 방어 강화) ---
+  const processFrame = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = cropCanvasRef.current;
+
+    // video나 canvas가 없으면 실행 중단 (videoRef is not defined 방지)
+    if (!video || !canvas || !isAnalyzing || !isCapturing) return;
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    // 비디오 데이터가 유효한 상태인지 확인 (HAVE_CURRENT_DATA 이상)
+    if (ctx && video.readyState >= 2) {
+      const vW = video.videoWidth;
+      const vH = video.videoHeight;
+
+      if (vW === 0 || vH === 0) return;
+
+      const sx = vW * HP_BAR_CONFIG.roiX;
+      const sy = vH * HP_BAR_CONFIG.roiY;
+      const sw = vW * HP_BAR_CONFIG.roiWidth;
+      const sh = vH * HP_BAR_CONFIG.roiHeight;
+
+      // 크롭 수행
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+      const imageData = canvas.toDataURL('image/jpeg', 0.7);
+      requestServerAnalysis(imageData);
+    }
+  }, [isAnalyzing, isCapturing]);
+
+  // 분석 루프 설정
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isAnalyzing && isCapturing) {
+      timer = setInterval(processFrame, 500);
+    }
+    return () => clearInterval(timer);
+  }, [isAnalyzing, isCapturing, processFrame]);
+
+  // --- 3. 화면 캡처 및 PiP 로직 ---
   const startCapture = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -45,34 +92,30 @@ export default function AnalyzePage() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         setIsCapturing(true)
-        stream.getVideoTracks()[0].onended = stopAnalysis
+        stream.getVideoTracks()[0].onended = () => {
+          setIsCapturing(false);
+          setIsAnalyzing(false);
+        }
       }
-    } catch (err) { console.error(err) }
+    } catch (err) {
+      console.error("캡처 시작 실패:", err);
+    }
   }
 
-  const stopAnalysis = useCallback(() => {
-    if (videoRef.current?.srcObject) {
-      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop())
-      videoRef.current.srcObject = null
-    }
-    if (pipWindowRef.current) pipWindowRef.current.close()
-    setIsCapturing(false)
-  }, [])
-
   const openGuidePip = async () => {
-    if (!('documentPictureInPicture' in window)) return alert("Document PiP 미지원 브라우저입니다.");
+    if (!('documentPictureInPicture' in window)) return alert("PiP 미지원 브라우저입니다.");
     try {
       // @ts-ignore
       const pipWindow = await window.documentPictureInPicture.requestWindow({ width: 320, height: 220 });
       pipWindowRef.current = pipWindow;
-      const styleTags = Array.from(document.styleSheets)
-        .filter(s => s.href === null || s.href.startsWith(location.origin))
-        .map(s => {
-          const style = document.createElement('style');
-          style.textContent = Array.from(s.cssRules).map(r => r.cssText).join('');
-          return style;
-        });
+      
+      const styleTags = Array.from(document.styleSheets).map(s => {
+        const style = document.createElement('style');
+        try { style.textContent = Array.from(s.cssRules).map(r => r.cssText).join(''); } catch(e) {}
+        return style;
+      });
       styleTags.forEach(s => pipWindow.document.head.appendChild(s));
+      
       updatePipUI(pipWindow);
       pipWindow.addEventListener('pagehide', () => { pipWindowRef.current = null; });
     } catch (err) { console.error(err) }
@@ -88,119 +131,107 @@ export default function AnalyzePage() {
       <div>
         <div class="flex justify-between items-center mb-1">
           <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">LOA DOCTOR GUIDE</span>
-          <div class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div><span class="text-[9px] text-slate-500 font-mono">LIVE</span></div>
+          <div class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 ${isAnalyzing ? 'bg-green-500' : 'bg-red-500'} rounded-full animate-pulse"></div><span class="text-[9px] text-slate-500 font-mono">LIVE</span></div>
         </div>
         <h1 class="text-base font-bold text-slate-200">${selectedRaid} <span class="text-slate-500 text-xs font-normal">${selectedGate}</span></h1>
       </div>
       <div class="bg-blue-500/10 rounded-xl border border-blue-500/20 p-3 my-2">
-        <div class="text-[9px] text-blue-400 font-semibold mb-1 uppercase tracking-wider">Phase</div>
-        <div class="text-lg font-bold text-white leading-none">${currentGuide.hpPhase}</div>
+        <div class="text-[9px] text-blue-400 font-semibold mb-1 uppercase tracking-wider">Current Phase</div>
+        <div class="text-lg font-bold text-white leading-none">${currentHP > 0 ? currentHP + ' 줄' : '인식 중...'}</div>
       </div>
-      <div class="mt-1">
-        <p class="text-sm font-medium leading-snug text-slate-300 break-keep">${currentGuide.hint}</p>
-      </div>
+      <p class="text-sm font-medium leading-snug text-slate-300 break-keep">${currentGuide.hint}</p>
     `;
     doc.body.appendChild(root);
   }
 
   useEffect(() => {
     if (pipWindowRef.current) updatePipUI(pipWindowRef.current);
-  }, [selectedRaid, selectedGate, currentGuide]);
+  }, [selectedRaid, selectedGate, currentGuide, currentHP, isAnalyzing]);
 
   return (
     <div className="min-h-screen bg-[#0f111a] text-slate-100 selection:bg-blue-500/30">
-      {/* 네비게이션 바 (메인 페이지와 통일) */}
       <nav className="border-b border-white/10 px-6 py-4 flex justify-between items-center bg-[#0f111a]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer" onClick={() => router.push('/')}>
           LOA Doctor
         </div>
-        <div className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">Analysis Mode</div>
       </nav>
 
       <main className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* 왼쪽 설정 패널: 메인 페이지 'System Check' 스타일 적용 */}
+          {/* 설정 패널 */}
           <div className="lg:col-span-4 space-y-6">
             <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-sm shadow-xl">
               <h2 className="text-sm font-semibold text-slate-400 mb-6 uppercase tracking-wider">Raid Configuration</h2>
               
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-widest">레이드 선택</label>
-                  <select 
-                    value={selectedRaid}
-                    onChange={(e) => { setSelectedRaid(e.target.value); setSelectedGate(RAIDS[e.target.value as keyof typeof RAIDS][0]); }}
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm focus:border-blue-500/50 outline-none transition-all text-slate-200"
-                  >
-                    {Object.keys(RAIDS).map(raid => <option key={raid} value={raid}>{raid}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-widest">관문 선택</label>
-                  <select 
-                    value={selectedGate}
-                    onChange={(e) => setSelectedGate(e.target.value)}
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm focus:border-blue-500/50 outline-none transition-all text-slate-200"
-                  >
-                    {RAIDS[selectedRaid as keyof typeof RAIDS].map(gate => <option key={gate} value={gate}>{gate}</option>)}
-                  </select>
-                </div>
+              <div className="space-y-4 mb-8">
+                <select value={selectedRaid} onChange={(e) => setSelectedRaid(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none">
+                  {Object.keys(RAIDS).map(raid => <option key={raid} value={raid}>{raid}</option>)}
+                </select>
+                <select value={selectedGate} onChange={(e) => setSelectedGate(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none">
+                  {RAIDS[selectedRaid as keyof typeof RAIDS].map(gate => <option key={gate} value={gate}>{gate}</option>)}
+                </select>
               </div>
 
-              <div className="mt-8 space-y-3">
+              {/* ROI 미리보기 캔버스 */}
+              {isCapturing && (
+                <div className="mb-6 space-y-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">HP Bar ROI Preview</span>
+                  <canvas ref={cropCanvasRef} width={400} height={50} className="w-full h-12 bg-black rounded-lg border border-blue-500/30 object-cover" />
+                </div>
+              )}
+
+              <div className="space-y-3">
                 {!isCapturing ? (
-                  <button onClick={startCapture} className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-600/20 active:scale-95">
-                    화면 공유 시작
-                  </button>
+                  <button onClick={startCapture} className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg shadow-blue-600/20">화면 공유 시작</button>
                 ) : (
                   <>
-                    <button onClick={openGuidePip} className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl font-bold text-sm transition-all active:scale-95">
-                      공략 가이드 오버레이(PiP) 실행
+                    <button 
+                      onClick={() => setIsAnalyzing(!isAnalyzing)} 
+                      className={`w-full py-4 rounded-xl font-bold text-sm transition-all active:scale-95 ${isAnalyzing ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-600 text-white'}`}
+                    >
+                      {isAnalyzing ? "서버 분석 중단" : "서버 분석 시작"}
                     </button>
-                    <button onClick={stopAnalysis} className="w-full py-3 text-red-400 hover:text-red-300 text-xs font-medium transition-colors">
-                      분석 중단
-                    </button>
+                    <button onClick={openGuidePip} className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl font-bold text-sm transition-all active:scale-95">OS 공략창(PiP) 실행</button>
                   </>
                 )}
               </div>
             </div>
-
-            <div className="py-3 px-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center text-[10px] text-blue-300">
-               {isCapturing ? "● 실시간 화면 분석 엔진 가동 중" : "분석 시작을 위해 화면을 공유해주세요"}
-            </div>
           </div>
 
-          {/* 오른쪽 프리뷰 패널 */}
+          {/* 프리뷰 패널 */}
           <div className="lg:col-span-8 space-y-4">
             <div className="relative aspect-video bg-black/60 rounded-3xl border border-white/10 overflow-hidden shadow-2xl ring-1 ring-white/5">
               <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
-              {!isCapturing && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 mb-4 rounded-full border border-white/10 flex items-center justify-center bg-white/[0.02]">
-                    <div className="w-0 h-0 border-y-[8px] border-y-transparent border-l-[12px] border-l-slate-600 ml-1"></div>
-                  </div>
-                  <p className="text-slate-500 text-sm font-medium">Capture Preview</p>
+              
+              {/* ROI 가이드 테두리 Overlay */}
+              {isCapturing && (
+                <div 
+                  className="absolute border-2 border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.4)] pointer-events-none z-10"
+                  style={{
+                    left: `${HP_BAR_CONFIG.roiX * 100}%`,
+                    top: `${HP_BAR_CONFIG.roiY * 100}%`,
+                    width: `${HP_BAR_CONFIG.roiWidth * 100}%`,
+                    height: `${HP_BAR_CONFIG.roiHeight * 100}%`,
+                  }}
+                >
+                  <span className="absolute -top-5 left-0 text-[10px] font-bold text-red-500 bg-black/80 px-1.5 py-0.5 rounded-sm whitespace-nowrap">
+                    BACKEND ROI
+                  </span>
+                </div>
+              )}
+
+              {isAnalyzing && (
+                <div className="absolute top-6 left-6 flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-full border border-green-500/50 backdrop-blur-sm z-20">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <span className="text-[10px] font-mono text-green-500 uppercase tracking-tighter">Server Syncing...</span>
                 </div>
               )}
             </div>
-            
-            <div className="flex justify-between items-center px-2">
-              <div className="flex gap-4">
-                <div className="text-[10px] text-slate-500">
-                  <span className="text-slate-600 font-bold mr-1 uppercase">Source:</span> {isCapturing ? 'Captured' : 'None'}
-                </div>
-                <div className="text-[10px] text-slate-500">
-                  <span className="text-slate-600 font-bold mr-1 uppercase">Engine:</span> OpenCV-Ready
-                </div>
-              </div>
-              <p className="text-[10px] text-slate-600 italic leading-relaxed text-right">
-                LOA Doctor는 플레이어의 판단을 돕는 보조 도구입니다.
-              </p>
-            </div>
+            <p className="text-[10px] text-slate-600 italic px-4">
+              * 붉은 영역이 보스의 체력바 위치와 일치하는지 확인하세요.
+            </p>
           </div>
-
         </div>
       </main>
     </div>
