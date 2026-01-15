@@ -35,6 +35,34 @@ export default function AdminPage() {
     }
   }
 
+  const addKamenGate3Phase = async () => {
+    try {
+      setLoading(true)
+      setResult(null)
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/addRaidGuide`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          raid: '카멘',
+          gate: 3,
+          reset: true, // 기존 Phase 삭제 후 재생성
+        }),
+      })
+
+      if (!res.ok) throw new Error('요청 실패')
+
+      const data = await res.json()
+      setResult(`카멘 3관문 Phase ${data.count}개 생성 완료`)
+    } catch (err) {
+      setResult('Phase 생성 실패')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0f111a] text-slate-100 flex flex-col">
       {/* Top Bar */}
@@ -94,9 +122,33 @@ export default function AdminPage() {
                 {result && <div className="text-xs mt-2">{result}</div>}
               </div>
 
-              {/* Placeholder Card */}
-              <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 flex items-center justify-center text-slate-500 text-sm">
-                추가 관리 기능 예정
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
+                <h3 className="font-semibold text-sm">카멘 3관문 Phase 자동 생성</h3>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  카멘 3관문 줄 수 기반 Phase 가이드를 자동으로 생성합니다.
+                  <br />
+                  (1000 → 10줄, 기존 데이터는 초기화됩니다)
+                </p>
+
+                <button
+                  onClick={addKamenGate3Phase}
+                  disabled={loading}
+                  className="
+                    w-full py-3 rounded-xl
+                    bg-blue-600 hover:bg-blue-500
+                    disabled:opacity-50
+                    font-bold text-sm transition-all
+                    "
+                >
+                  {loading ? 'Phase 생성 중...' : '카멘 3관문 Phase 생성'}
+                </button>
+
+                {result && (
+                  <div className="text-xs text-slate-300 bg-black/30 rounded-lg px-3 py-2">
+                    {result}
+                  </div>
+                )}
               </div>
             </div>
           </main>

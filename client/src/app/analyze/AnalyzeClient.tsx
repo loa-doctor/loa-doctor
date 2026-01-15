@@ -2,17 +2,27 @@
 
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  ScreenCaptureContainer,
+  ScreenCaptureHandle,
+} from '@/src/features/screen-capture/ScreenCaptureContainer'
 
 type Raid = {
   name: string
   gates: { gateNumber: number; name: string }[]
 }
 
+type PhaseGuide = {
+  line: number
+  phase: string
+  hint: string
+}
+
 export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   const router = useRouter()
   const videoRef = useRef<HTMLVideoElement>(null)
   const pipWindowRef = useRef<Window | null>(null)
-
+  const captureRef = useRef<ScreenCaptureHandle | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [selectedRaid, setSelectedRaid] = useState('카멘')
   const [selectedGate, setSelectedGate] = useState('1관문')
@@ -20,6 +30,44 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
     hpPhase: '분석 대기 중',
     hint: '레이드와 관문을 선택하고 PiP를 실행하세요.',
   })
+
+  const [phaseGuides, setPhaseGuides] = useState<PhaseGuide[]>([])
+  const lastTriggeredLineRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    const gateNumber = Number(selectedGate.replace('관문', ''))
+
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE}/api/raids/guides?raid=${selectedRaid}&gate=${gateNumber}`
+    )
+      .then(res => res.json())
+      .then(data => {
+        setPhaseGuides(data)
+        lastTriggeredLineRef.current = null // 관문 변경 시 초기화
+      })
+  }, [selectedRaid, selectedGate])
+
+  const handleLineDetected = useCallback(
+    (currentLine: number) => {
+      // 1️⃣ 이미 트리거된 phase보다 "아래"만 보도록 제한
+      const next = phaseGuides.find(guide => {
+        if (lastTriggeredLineRef.current !== null) {
+          return currentLine <= guide.line && guide.line < lastTriggeredLineRef.current
+        }
+        return currentLine <= guide.line
+      })
+
+      if (!next) return
+
+      lastTriggeredLineRef.current = next.line
+
+      setCurrentGuide({
+        hpPhase: next.phase,
+        hint: next.hint,
+      })
+    },
+    [phaseGuides]
+  )
 
   const raidMap = useMemo(() => {
     const map: Record<string, string[]> = {}
@@ -153,7 +201,10 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
               <div className="mt-8 space-y-3">
                 {!isCapturing ? (
                   <button
-                    onClick={() => {}}
+                    onClick={() => {
+                      captureRef.current?.startCapture()
+                      setIsCapturing(true)
+                    }}
                     className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-600/20 active:scale-95"
                   >
                     화면 공유 시작
@@ -167,7 +218,10 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                       공략 가이드 오버레이(PiP) 실행
                     </button>
                     <button
-                      onClick={() => {}}
+                      onClick={() => {
+                        captureRef.current?.stopCapture()
+                        setIsCapturing(false)
+                      }}
                       className="w-full py-3 text-red-400 hover:text-red-300 text-xs font-medium transition-colors"
                     >
                       분석 중단
@@ -185,33 +239,20 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
           </div>
 
           {/* 오른쪽 프리뷰 패널 */}
-          <div className="lg:col-span-8 space-y-4">
-            <div className="relative aspect-video bg-black/60 rounded-3xl border border-white/10 overflow-hidden shadow-2xl ring-1 ring-white/5">
-              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
-              {!isCapturing && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 mb-4 rounded-full border border-white/10 flex items-center justify-center bg-white/[0.02]">
-                    <div className="w-0 h-0 border-y-[8px] border-y-transparent border-l-[12px] border-l-slate-600 ml-1"></div>
-                  </div>
-                  <p className="text-slate-500 text-sm font-medium">Capture Preview</p>
-                </div>
-              )}
-            </div>
 
-            <div className="flex justify-between items-center px-2">
-              <div className="flex gap-4">
-                <div className="text-[10px] text-slate-500">
-                  <span className="text-slate-600 font-bold mr-1 uppercase">Source:</span>{' '}
-                  {isCapturing ? 'Captured' : 'None'}
-                </div>
-                <div className="text-[10px] text-slate-500">
-                  <span className="text-slate-600 font-bold mr-1 uppercase">Engine:</span>{' '}
-                  OpenCV-Ready
-                </div>
-              </div>
-              <p className="text-[10px] text-slate-600 italic leading-relaxed text-right">
-                LOA Doctor는 플레이어의 판단을 돕는 보조 도구입니다.
-              </p>
+          {/* 오른쪽 프리뷰 패널 */}
+          <div className="lg:col-span-8">
+            <div
+              className="
+                    rounded-2xl 
+                    border border-white/10 
+                    bg-black/30 
+                    backdrop-blur-sm 
+                    shadow-xl
+                    overflow-hidden
+                "
+            >
+              <ScreenCaptureContainer ref={captureRef} embed onLineDetected={handleLineDetected} />
             </div>
           </div>
         </div>

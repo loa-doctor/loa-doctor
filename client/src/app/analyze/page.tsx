@@ -1,4 +1,4 @@
-import AnalyzeClient from "./AnalyzeClient"
+import AnalyzeClient from './AnalyzeClient'
 
 async function getRaidData() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids`, {

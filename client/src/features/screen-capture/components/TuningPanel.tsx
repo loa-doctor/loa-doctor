@@ -76,9 +76,7 @@ export default function TuningPanel({ value, onChange }: Props) {
         />
       </label>
 
-      <div className="text-xs text-zinc-500">
-        LOCKED 이후에도 실시간 미세 조정 가능
-      </div>
+      <div className="text-xs text-zinc-500">LOCKED 이후에도 실시간 미세 조정 가능</div>
     </div>
   )
 }
