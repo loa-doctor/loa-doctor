@@ -66,7 +66,7 @@ export function useTesseractOCR() {
   /* =============================
    * OCR 인식
    * ============================= */
-  const recognize = async (canvas: HTMLCanvasElement) => {
+  const recognize = async (canvas: HTMLCanvasElement, onConfirmed?: (line: number) => void) => {
     if (!workerRef.current) return
 
     const res = await workerRef.current.recognize(canvas)
@@ -110,6 +110,7 @@ export function useTesseractOCR() {
         if (decreasingStreakRef.current >= 2) {
           confirmedRef.current = n
           setLineText(String(n))
+          onConfirmed?.(n)
           usedDecreasingFlow = true
         }
       } else {
@@ -142,6 +143,7 @@ export function useTesseractOCR() {
       if (stableCountRef.current >= requiredStable) {
         confirmedRef.current = n
         setLineText(String(n))
+        onConfirmed?.(n)
       }
     }
 

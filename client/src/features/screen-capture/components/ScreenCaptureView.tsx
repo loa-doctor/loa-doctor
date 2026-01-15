@@ -43,22 +43,18 @@ export default function ScreenCaptureView({
   onTuningChange,
   ocrPreviewCanvasRef,
 }: Props) {
-    return (
+  return (
     <div className="p-6 space-y-5">
       {/* 상태 바 */}
       <div className="flex items-center gap-3">
         <h1 className="text-xl font-bold">LoA Screen – Calibration</h1>
 
-        <button
-          onClick={onToggleDebug}
-          className="px-3 py-2 bg-zinc-800 text-white rounded"
-        >
+        <button onClick={onToggleDebug} className="px-3 py-2 bg-zinc-800 text-white rounded">
           디버그 {debugOn ? '끄기' : '켜기'}
         </button>
 
         <div className="ml-auto text-sm">
-          상태 <b>{phase}</b> / 비율{' '}
-          <b className="text-red-500">{aspect}</b> / 줄수{' '}
+          상태 <b>{phase}</b> / 비율 <b className="text-red-500">{aspect}</b> / 줄수{' '}
           <b className="text-green-400">{lineText}</b>
         </div>
       </div>
@@ -66,23 +62,24 @@ export default function ScreenCaptureView({
       <OCRPreviewCanvas ref={ocrPreviewCanvasRef} />
       <video ref={videoRef} className="hidden" />
 
-      <GameCanvas
-        videoRef={videoRef}
-        rect={phase === 'LOCKED' ? lockedRect : displayRect}
-        tuning={tuning}
-      />
+      {!debugOn && (
+        <>
+          <GameCanvas
+            videoRef={videoRef}
+            rect={phase === 'LOCKED' ? lockedRect : displayRect}
+            tuning={tuning}
+          />
+          <DebugMiniMap
+            videoRef={videoRef}
+            rect={phase === 'LOCKED' ? lockedRect : displayRect}
+            tuning={tuning}
+            phase={phase}
+            aspect={aspect}
+          />
 
-      {debugOn && (
-        <DebugMiniMap
-          videoRef={videoRef}
-          rect={phase === 'LOCKED' ? lockedRect : displayRect}
-          tuning={tuning}
-          phase={phase}
-          aspect={aspect}
-        />
+          <TuningPanel value={tuning} onChange={onTuningChange} />
+        </>
       )}
-
-      <TuningPanel value={tuning} onChange={onTuningChange} />
     </div>
   )
 }
