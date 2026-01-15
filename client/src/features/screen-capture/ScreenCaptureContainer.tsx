@@ -1,13 +1,24 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
 import ScreenCaptureView from './components/ScreenCaptureView'
 import { useScreenShare } from './hooks/useScreenShare'
 import { useAspectCalibration } from './hooks/useAspectCalibration'
 import { useTesseractOCR } from './hooks/useTesseractOCR'
 import { applyTuning, type RectTuning } from './utils/rect'
 
-export default function ScreenCaptureContainer() {
+export type ScreenCaptureHandle = {
+  startCapture: () => void
+  stopCapture: () => void
+}
+
+export const ScreenCaptureContainer = forwardRef<
+  ScreenCaptureHandle,
+  {
+    embed?: boolean
+    onLineDetected?: (line: number) => void
+  }
+>(function ScreenCaptureContainer({ embed = false, onLineDetected }, ref) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const ocrPreviewCanvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -15,6 +26,18 @@ export default function ScreenCaptureContainer() {
   const { start, stop } = useScreenShare(videoRef)
   const calibration = useAspectCalibration(videoRef)
   const { lineText, recognize, stop: stopOCR } = useTesseractOCR()
+
+  useImperativeHandle(ref, () => ({
+    startCapture() {
+      start()
+      calibration.startSearch()
+    },
+    stopCapture() {
+      stop()
+      stopOCR()
+      calibration.reset()
+    },
+  }))
 
   // ===== debug =====
   const [debugOn, setDebugOn] = useState(true)
@@ -30,12 +53,6 @@ export default function ScreenCaptureContainer() {
 
   const handleTuningChange = (v: Partial<RectTuning>) => {
     setTuning(prev => ({ ...prev, ...v }))
-  }
-
-  const handleStopAll = () => {
-    stop()
-    stopOCR()
-    calibration.reset()
   }
 
   // ===== OCR ROI =====
@@ -106,44 +123,25 @@ export default function ScreenCaptureContainer() {
     if (!canvas) return
 
     const id = window.setInterval(() => {
-      recognize(canvas)
+      recognize(canvas, line => {
+        onLineDetected?.(line)
+      })
       drawOCRPreview()
     }, 800)
 
     return () => clearInterval(id)
-  }, [calibration.phase, recognize, drawOCRPreview])
+  }, [calibration.phase, recognize, drawOCRPreview, onLineDetected])
 
   return (
-    <>
-      <div className="flex gap-3 mt-4 ml-4">
-        <button
-          onClick={() => {
-            start()
-            calibration.startSearch()
-          }}
-          className="px-5 py-2.5 rounded-lg bg-zinc-900 text-zinc-100 border border-zinc-700 hover:bg-zinc-800"
-        >
-          ▶ 화면 공유 시작
-        </button>
-
-        <button
-          onClick={handleStopAll}
-          className="px-5 py-2.5 rounded-lg bg-red-900/80 text-red-100 border border-red-700 hover:bg-red-800"
-        >
-          ⏹ 전체 중지
-        </button>
-      </div>
-
-      <ScreenCaptureView
-        ocrPreviewCanvasRef={ocrPreviewCanvasRef}
-        videoRef={videoRef}
-        {...calibration}
-        debugOn={debugOn}
-        onToggleDebug={() => setDebugOn(v => !v)}
-        tuning={tuning}
-        onTuningChange={handleTuningChange}
-        lineText={lineText}
-      />
-    </>
+    <ScreenCaptureView
+      ocrPreviewCanvasRef={ocrPreviewCanvasRef}
+      videoRef={videoRef}
+      {...calibration}
+      debugOn={debugOn}
+      onToggleDebug={() => setDebugOn(v => !v)}
+      tuning={tuning}
+      onTuningChange={handleTuningChange}
+      lineText={lineText}
+    />
   )
-}
+})

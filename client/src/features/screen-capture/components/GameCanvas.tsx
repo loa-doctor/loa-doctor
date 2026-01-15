@@ -37,10 +37,10 @@ export default function GameCanvas({ videoRef, rect, tuning }: Props) {
   return (
     <div className="space-y-2">
       <p className="font-semibold">게임 화면 (크롭 결과)</p>
-<div className="flex">
-  <canvas
-    ref={canvasRef}
-    className="
+      <div className="flex">
+        <canvas
+          ref={canvasRef}
+          className="
       border
       max-w-lg
       aspect-video
@@ -48,8 +48,8 @@ export default function GameCanvas({ videoRef, rect, tuning }: Props) {
       rounded-lg
       shadow-md
     "
-  />
-</div>
+        />
+      </div>
     </div>
   )
 }

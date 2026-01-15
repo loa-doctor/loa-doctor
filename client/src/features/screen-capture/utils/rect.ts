@@ -8,17 +8,8 @@ import { Rect, Aspect } from './types'
  * 주어진 frame 안에서 특정 비율(16:9 / 21:9)의
  * 가장 큰 중앙 Rect 계산
  */
-export function calcLargestRect(
-  frameW: number,
-  frameH: number,
-  aspect: Aspect
-): Rect | null {
-  const ratio =
-    aspect === '21:9'
-      ? 21 / 9
-      : aspect === '16:9'
-      ? 16 / 9
-      : 0
+export function calcLargestRect(frameW: number, frameH: number, aspect: Aspect): Rect | null {
+  const ratio = aspect === '21:9' ? 21 / 9 : aspect === '16:9' ? 16 / 9 : 0
 
   if (!ratio) return null
 
@@ -44,19 +35,14 @@ export function calcLargestRect(
 /**
  * 16:9 / 21:9 중 면적이 더 큰 Rect 선택
  */
-export function pickBestRect(
-  frameW: number,
-  frameH: number
-): Rect | null {
+export function pickBestRect(frameW: number, frameH: number): Rect | null {
   const r21 = calcLargestRect(frameW, frameH, '21:9')
   const r16 = calcLargestRect(frameW, frameH, '16:9')
 
   const list = [r21, r16].filter(Boolean) as Rect[]
   if (!list.length) return null
 
-  return list.reduce((a, b) =>
-    a.w * a.h > b.w * b.h ? a : b
-  )
+  return list.reduce((a, b) => (a.w * a.h > b.w * b.h ? a : b))
 }
 
 /* =====================================================
@@ -67,11 +53,7 @@ export function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t
 }
 
-export function lerpRect(
-  from: Rect,
-  to: Rect,
-  t: number
-): Rect {
+export function lerpRect(from: Rect, to: Rect, t: number): Rect {
   return {
     aspect: to.aspect,
     x: Math.round(lerp(from.x, to.x, t)),
@@ -86,22 +68,17 @@ export function lerpRect(
  * ===================================================== */
 
 export type RectTuning = {
-  scale: number        // 0.05 ~ 1.0
-  padX: number         // px
-  padY: number         // px
-  offXRatio: number    // -0.5 ~ 0.5
-  offYRatio: number    // -0.5 ~ 0.5
+  scale: number // 0.05 ~ 1.0
+  padX: number // px
+  padY: number // px
+  offXRatio: number // -0.5 ~ 0.5
+  offYRatio: number // -0.5 ~ 0.5
 }
 
 /**
  * LOCK된 기준 Rect에 미세 조정 적용
  */
-export function applyTuning(
-  base: Rect,
-  frameW: number,
-  frameH: number,
-  tuning: RectTuning
-): Rect {
+export function applyTuning(base: Rect, frameW: number, frameH: number, tuning: RectTuning): Rect {
   // scale
   const scaledW = Math.round(base.w * tuning.scale)
   const scaledH = Math.round(base.h * tuning.scale)
