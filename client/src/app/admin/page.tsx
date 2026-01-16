@@ -21,7 +21,7 @@ export default function AdminPage() {
       setLoading(true)
       setResult(null)
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/addRaid`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/reset`, {
         method: 'POST',
       })
 
@@ -40,22 +40,23 @@ export default function AdminPage() {
       setLoading(true)
       setResult(null)
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/addRaidGuide`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/add-guides`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          raid: '카멘',
-          gate: 3,
-          reset: true, // 기존 Phase 삭제 후 재생성
+          boss: '카멘',
+          difficulties: ['노말', '하드'],
+          gates: [1, 2, 3],
+          reset: true,
         }),
       })
 
       if (!res.ok) throw new Error('요청 실패')
 
       const data = await res.json()
-      setResult(`카멘 3관문 Phase ${data.count}개 생성 완료`)
+      setResult(`Phase ${data.inserted}개 생성 완료`)
     } catch (err) {
       setResult('Phase 생성 실패')
     } finally {
