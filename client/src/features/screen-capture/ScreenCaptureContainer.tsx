@@ -47,8 +47,9 @@ export const ScreenCaptureContainer = forwardRef<
     scale: 0.05,
     padX: 0,
     padY: 0,
-    offXRatio: 0.118,
+    offXRatio: 0.15,
     offYRatio: -0.43,
+    threshold: 50,
   })
 
   const handleTuningChange = (v: Partial<RectTuning>) => {
@@ -103,7 +104,7 @@ export const ScreenCaptureContainer = forwardRef<
     }
 
     const avg = sum / count
-    const THRESHOLD = avg + 50 // < 튜닝해야하는 값
+    const THRESHOLD = avg + tuning.threshold // < 튜닝해야하는 값
 
     for (let i = 0; i < data.length; i += 4) {
       const v = data[i]

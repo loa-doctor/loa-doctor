@@ -291,7 +291,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
             </section>
           </div>
           <div className="lg:col-span-8">
-            <div className="rounded-[40px] border border-white/5 bg-black/40 overflow-hidden shadow-2xl aspect-video relative">
+            <div className="rounded-[40px] border border-white/5 bg-black/40 shadow-2xl aspect-video relative">
               <ScreenCaptureContainer ref={captureRef} embed onLineDetected={handleLineDetected} />
             </div>
           </div>

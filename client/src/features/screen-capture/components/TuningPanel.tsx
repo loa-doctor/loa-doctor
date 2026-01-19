@@ -6,6 +6,7 @@ type Tuning = {
   padY: number
   offXRatio: number
   offYRatio: number
+  threshold: number
 }
 
 type Props = {
@@ -22,7 +23,7 @@ export default function TuningPanel({ value, onChange }: Props) {
         Scale: {value.scale.toFixed(2)}
         <input
           type="range"
-          min={0.05}
+          min={0.02}
           max={1}
           step={0.01}
           value={value.scale}
@@ -30,7 +31,7 @@ export default function TuningPanel({ value, onChange }: Props) {
         />
       </label>
 
-      <label className="block">
+      {/* <label className="block">
         PadX(px): {value.padX}
         <input
           type="range"
@@ -50,10 +51,26 @@ export default function TuningPanel({ value, onChange }: Props) {
           value={value.padY}
           onChange={e => onChange({ padY: Number(e.target.value) })}
         />
-      </label>
+      </label> */}
 
-      <label className="block">
-        OffsetXRatio: {value.offXRatio}
+      <div className="space-y-1">
+        <div className="text-sm font-medium">
+          THRESHOLD: <span className="font-mono tabular-nums">{value.threshold}</span>
+        </div>
+        <input
+          type="range"
+          min={5}
+          max={200}
+          step={1}
+          value={value.threshold}
+          onChange={e => onChange({ threshold: Number(e.target.value) })}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <div className="text-sm font-medium">
+          OffsetXRatio: <span className="font-mono tabular-nums">{value.offXRatio.toFixed(3)}</span>
+        </div>
         <input
           type="range"
           min={-0.5}
@@ -62,10 +79,12 @@ export default function TuningPanel({ value, onChange }: Props) {
           value={value.offXRatio}
           onChange={e => onChange({ offXRatio: Number(e.target.value) })}
         />
-      </label>
+      </div>
 
-      <label className="block">
-        OffsetYRatio: {value.offYRatio}
+      <div className="space-y-1">
+        <div className="text-sm font-medium">
+          OffsetYRatio: <span className="font-mono tabular-nums">{value.offYRatio.toFixed(3)}</span>
+        </div>
         <input
           type="range"
           min={-0.5}
@@ -74,7 +93,7 @@ export default function TuningPanel({ value, onChange }: Props) {
           value={value.offYRatio}
           onChange={e => onChange({ offYRatio: Number(e.target.value) })}
         />
-      </label>
+      </div>
 
       <div className="text-xs text-zinc-500">LOCKED 이후에도 실시간 미세 조정 가능</div>
     </div>

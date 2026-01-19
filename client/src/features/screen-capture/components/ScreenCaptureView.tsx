@@ -26,6 +26,7 @@ type Props = {
     padY: number
     offXRatio: number
     offYRatio: number
+    threshold: number
   }
   onTuningChange: (v: Partial<Props['tuning']>) => void
 }
@@ -50,7 +51,7 @@ export default function ScreenCaptureView({
         <h1 className="text-xl font-bold">LoA Screen – Calibration</h1>
 
         <button onClick={onToggleDebug} className="px-3 py-2 bg-zinc-800 text-white rounded">
-          디버그 {debugOn ? '끄기' : '켜기'}
+          디버그 {!debugOn ? '끄기' : '켜기'}
         </button>
 
         <div className="ml-auto text-sm">
