@@ -74,7 +74,7 @@ export default function TuningPanel({ value, onChange }: Props) {
         <input
           type="range"
           min={-0.5}
-          max={0.5}
+          max={1.0}
           step={0.001}
           value={value.offXRatio}
           onChange={e => onChange({ offXRatio: Number(e.target.value) })}
