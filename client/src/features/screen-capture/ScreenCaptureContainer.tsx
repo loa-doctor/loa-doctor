@@ -6,6 +6,7 @@ import { useScreenShare } from './hooks/useScreenShare'
 import { useAspectCalibration } from './hooks/useAspectCalibration'
 import { useTesseractOCR } from './hooks/useTesseractOCR'
 import { applyTuning, type RectTuning } from './utils/rect'
+import { STORAGE_KEYS } from './utils/storageKeys'
 
 export type ScreenCaptureHandle = {
   startCapture: () => void
@@ -42,13 +43,29 @@ export const ScreenCaptureContainer = forwardRef<
   // ===== debug =====
   const [debugOn, setDebugOn] = useState(true)
 
-  // ===== tuning =====
-  const [tuning, setTuning] = useState<RectTuning>({
+  const DEFAULT_TUNING: RectTuning = {
     scale: 0.05,
     padX: 0,
     padY: 0,
-    offXRatio: 0.118,
+    offXRatio: 0.15,
     offYRatio: -0.43,
+    threshold: 50,
+  }
+
+  const [tuning, setTuning] = useState<RectTuning>(() => {
+    if (typeof window === 'undefined') return DEFAULT_TUNING
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.TUNING)
+      if (!saved) return DEFAULT_TUNING
+
+      return {
+        ...DEFAULT_TUNING,
+        ...JSON.parse(saved),
+      }
+    } catch {
+      return DEFAULT_TUNING
+    }
   })
 
   const handleTuningChange = (v: Partial<RectTuning>) => {
@@ -58,7 +75,10 @@ export const ScreenCaptureContainer = forwardRef<
   // ===== OCR ROI =====
   const roi = { x: 0.15, y: 0.27, w: 0.7, h: 0.4 }
   const scaleOCR = 4
-
+  const effectiveTuning =
+    calibration.phase === 'LOCKED'
+      ? tuning
+      : DEFAULT_TUNING
   /**
    * 프리뷰 + OCR 공용 draw 함수
    */
@@ -69,7 +89,12 @@ export const ScreenCaptureContainer = forwardRef<
     if (!video.videoWidth || !video.videoHeight) return
     if (!calibration.lockedRect) return
 
-    const tuned = applyTuning(calibration.lockedRect, video.videoWidth, video.videoHeight, tuning)
+    const tuned = applyTuning(
+      calibration.lockedRect,
+      video.videoWidth,
+      video.videoHeight,
+      effectiveTuning
+    )
 
     const rx = Math.round(tuned.w * roi.x)
     const ry = Math.round(tuned.h * roi.y)
@@ -103,7 +128,7 @@ export const ScreenCaptureContainer = forwardRef<
     }
 
     const avg = sum / count
-    const THRESHOLD = avg + 50 // < 튜닝해야하는 값
+    const THRESHOLD = avg + tuning.threshold // < 튜닝해야하는 값
 
     for (let i = 0; i < data.length; i += 4) {
       const v = data[i]
@@ -139,7 +164,8 @@ export const ScreenCaptureContainer = forwardRef<
       {...calibration}
       debugOn={debugOn}
       onToggleDebug={() => setDebugOn(v => !v)}
-      tuning={tuning}
+      tuning={effectiveTuning}
+      rawTuning={tuning}
       onTuningChange={handleTuningChange}
       lineText={lineText}
     />

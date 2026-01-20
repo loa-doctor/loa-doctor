@@ -2,18 +2,12 @@
 
 import { useEffect, useRef } from 'react'
 import { Rect } from '../utils/types'
-import { applyTuning } from '../utils/rect' // ← 기존 함수 그대로 이동해두면 됨
+import { applyTuning, RectTuning } from '../utils/rect' // ← 기존 함수 그대로 이동해두면 됨
 
 type Props = {
   videoRef: React.RefObject<HTMLVideoElement | null>
   rect: Rect | null
-  tuning: {
-    scale: number
-    padX: number
-    padY: number
-    offXRatio: number
-    offYRatio: number
-  }
+  tuning: RectTuning
 }
 
 export default function GameCanvas({ videoRef, rect, tuning }: Props) {

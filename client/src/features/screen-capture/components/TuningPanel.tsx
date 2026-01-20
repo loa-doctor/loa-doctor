@@ -1,11 +1,16 @@
 'use client'
 
+import { useEffect } from 'react'
+import { STORAGE_KEYS } from '../utils/storageKeys'
+import { TuningRow } from './TuningRow'
+
 type Tuning = {
   scale: number
   padX: number
   padY: number
   offXRatio: number
   offYRatio: number
+  threshold: number
 }
 
 type Props = {
@@ -14,69 +19,58 @@ type Props = {
 }
 
 export default function TuningPanel({ value, onChange }: Props) {
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.TUNING, JSON.stringify(value))
+    } catch {}
+  }, [value])
+
   return (
     <div className="border rounded p-4 space-y-4 max-w-4xl">
       <div className="font-semibold">사각형 튜닝</div>
 
-      <label className="block">
-        Scale: {value.scale.toFixed(2)}
-        <input
-          type="range"
-          min={0.05}
-          max={1}
-          step={0.01}
-          value={value.scale}
-          onChange={e => onChange({ scale: Number(e.target.value) })}
-        />
-      </label>
+      <TuningRow
+        label="Scale"
+        value={value.scale}
+        displayValue={value.scale.toFixed(2)}
+        min={0.02}
+        max={1}
+        step={0.01}
+        onChange={v => onChange({ scale: v })}
+      />
 
-      <label className="block">
-        PadX(px): {value.padX}
-        <input
-          type="range"
-          min={0}
-          max={200}
-          value={value.padX}
-          onChange={e => onChange({ padX: Number(e.target.value) })}
-        />
-      </label>
+      <TuningRow
+        label="THRESHOLD"
+        value={value.threshold}
+        min={5}
+        max={200}
+        step={1}
+        onChange={v => onChange({ threshold: v })}
+      />
 
-      <label className="block">
-        PadY(px): {value.padY}
-        <input
-          type="range"
-          min={0}
-          max={200}
-          value={value.padY}
-          onChange={e => onChange({ padY: Number(e.target.value) })}
-        />
-      </label>
+      <TuningRow
+        label="OffsetXRatio"
+        value={value.offXRatio}
+        displayValue={value.offXRatio.toFixed(3)}
+        min={-0.5}
+        max={1.0}
+        step={0.001}
+        onChange={v => onChange({ offXRatio: v })}
+      />
 
-      <label className="block">
-        OffsetXRatio: {value.offXRatio}
-        <input
-          type="range"
-          min={-0.5}
-          max={0.5}
-          step={0.001}
-          value={value.offXRatio}
-          onChange={e => onChange({ offXRatio: Number(e.target.value) })}
-        />
-      </label>
+      <TuningRow
+        label="OffsetYRatio"
+        value={value.offYRatio}
+        displayValue={value.offYRatio.toFixed(3)}
+        min={-0.5}
+        max={0.5}
+        step={0.001}
+        onChange={v => onChange({ offYRatio: v })}
+      />
 
-      <label className="block">
-        OffsetYRatio: {value.offYRatio}
-        <input
-          type="range"
-          min={-0.5}
-          max={0.5}
-          step={0.001}
-          value={value.offYRatio}
-          onChange={e => onChange({ offYRatio: Number(e.target.value) })}
-        />
-      </label>
-
-      <div className="text-xs text-zinc-500">LOCKED 이후에도 실시간 미세 조정 가능</div>
+      <div className="text-xs text-zinc-500">
+        LOCKED 이후에도 실시간 미세 조정 가능
+      </div>
     </div>
   )
 }

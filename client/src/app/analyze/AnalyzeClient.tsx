@@ -61,8 +61,8 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
 
   const handleLineDetected = useCallback(
     (currentLine: number) => {
+      //TODO: 줄수가 2940 이런식으로 튀면 그냥 RawHP가 멈춰버리는 이슈 수정해야함.
       setRawHp(currentLine)
-
       // 1. 안정화 체크
       if (stabilityRef.current.lastVal === currentLine) {
         stabilityRef.current.count++
@@ -73,11 +73,11 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
 
       // 2. 리트라이 판정 (90줄 이상으로 확 튀었을 때만)
       // 77, 88 같은 오인식은 여기서 걸러지지 않도록 '패턴' 대신 '안정성'만 봅니다.
-      if (currentLine >= 90 && minLineReachedRef.current < 50) {
+      if (currentLine >= phaseGuides[0].line && minLineReachedRef.current < 50) {
         if (stabilityRef.current.count >= 3) {
           resetSession()
         }
-        return
+        //return
       }
 
       // 3. [핵심] 지능형 역행 차단
@@ -88,12 +88,12 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
           minLineReachedRef.current < 10 &&
           currentLine === minLineReachedRef.current * 10 + minLineReachedRef.current
         ) {
-          return // 77은 무시하고 기존 7을 유지 (압축하지 않음)
+          //return // 77은 무시하고 기존 7을 유지 (압축하지 않음)
         }
 
         // (B) 미세한 인식 오차(±2줄)는 허용하되, 그 이상은 3초 이상 안정화되어야 인정
         if (currentLine > minLineReachedRef.current + 2) {
-          if (stabilityRef.current.count < 10) return // 약 3초간 버텨야 역행 인정
+          //if (stabilityRef.current.count < 10) return // 약 3초간 버텨야 역행 인정
         }
       }
 
@@ -291,7 +291,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
             </section>
           </div>
           <div className="lg:col-span-8">
-            <div className="rounded-[40px] border border-white/5 bg-black/40 overflow-hidden shadow-2xl aspect-video relative">
+            <div className="rounded-[40px] border border-white/5 bg-black/40 shadow-2xl aspect-video relative">
               <ScreenCaptureContainer ref={captureRef} embed onLineDetected={handleLineDetected} />
             </div>
           </div>
