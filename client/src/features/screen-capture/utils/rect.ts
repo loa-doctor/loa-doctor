@@ -73,6 +73,7 @@ export type RectTuning = {
   padY: number // px
   offXRatio: number // -0.5 ~ 0.5
   offYRatio: number // -0.5 ~ 0.5
+  threshold: number // 10 ~ 50
 }
 
 /**

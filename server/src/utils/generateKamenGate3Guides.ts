@@ -5,7 +5,7 @@ export function generateGateGuides() {
     hint: string
   }[] = []
 
-  for (let line = 100; line >= 10; line -= 10) {
+  for (let line = 990; line >= 10; line -= 10) {
     guides.push({
       line,
       phase: `${line}줄 기믹제목`,

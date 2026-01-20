@@ -1,5 +1,6 @@
 'use client'
 
+import { RectTuning } from '../utils/rect'
 import { Aspect, Rect } from '../utils/types'
 import DebugMiniMap from './DebugMiniMap'
 import GameCanvas from './GameCanvas'
@@ -20,13 +21,8 @@ type Props = {
 
   lineText: string
 
-  tuning: {
-    scale: number
-    padX: number
-    padY: number
-    offXRatio: number
-    offYRatio: number
-  }
+  tuning: RectTuning
+  rawTuning: RectTuning
   onTuningChange: (v: Partial<Props['tuning']>) => void
 }
 
@@ -42,6 +38,7 @@ export default function ScreenCaptureView({
   tuning,
   onTuningChange,
   ocrPreviewCanvasRef,
+  rawTuning,
 }: Props) {
   return (
     <div className="p-6 space-y-5">
@@ -50,7 +47,7 @@ export default function ScreenCaptureView({
         <h1 className="text-xl font-bold">LoA Screen – Calibration</h1>
 
         <button onClick={onToggleDebug} className="px-3 py-2 bg-zinc-800 text-white rounded">
-          디버그 {debugOn ? '끄기' : '켜기'}
+          디버그 {!debugOn ? '끄기' : '켜기'}
         </button>
 
         <div className="ml-auto text-sm">
@@ -64,11 +61,11 @@ export default function ScreenCaptureView({
 
       {!debugOn && (
         <>
-          <GameCanvas
+          {/* <GameCanvas
             videoRef={videoRef}
             rect={phase === 'LOCKED' ? lockedRect : displayRect}
             tuning={tuning}
-          />
+          /> */}
           <DebugMiniMap
             videoRef={videoRef}
             rect={phase === 'LOCKED' ? lockedRect : displayRect}
@@ -77,7 +74,7 @@ export default function ScreenCaptureView({
             aspect={aspect}
           />
 
-          <TuningPanel value={tuning} onChange={onTuningChange} />
+          <TuningPanel value={rawTuning} onChange={onTuningChange} />
         </>
       )}
     </div>
