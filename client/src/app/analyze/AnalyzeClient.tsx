@@ -75,7 +75,6 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
       // 77, 88 같은 오인식은 여기서 걸러지지 않도록 '패턴' 대신 '안정성'만 봅니다.
       if (currentLine >= phaseGuides[0].line && minLineReachedRef.current < 50) {
         if (stabilityRef.current.count >= 3) {
-          console.log('fung!!')
           resetSession()
         }
         //return

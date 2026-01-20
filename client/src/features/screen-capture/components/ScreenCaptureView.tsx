@@ -1,5 +1,6 @@
 'use client'
 
+import { RectTuning } from '../utils/rect'
 import { Aspect, Rect } from '../utils/types'
 import DebugMiniMap from './DebugMiniMap'
 import GameCanvas from './GameCanvas'
@@ -20,14 +21,8 @@ type Props = {
 
   lineText: string
 
-  tuning: {
-    scale: number
-    padX: number
-    padY: number
-    offXRatio: number
-    offYRatio: number
-    threshold: number
-  }
+  tuning: RectTuning
+  rawTuning: RectTuning
   onTuningChange: (v: Partial<Props['tuning']>) => void
 }
 
@@ -43,6 +38,7 @@ export default function ScreenCaptureView({
   tuning,
   onTuningChange,
   ocrPreviewCanvasRef,
+  rawTuning,
 }: Props) {
   return (
     <div className="p-6 space-y-5">
@@ -65,11 +61,11 @@ export default function ScreenCaptureView({
 
       {!debugOn && (
         <>
-          <GameCanvas
+          {/* <GameCanvas
             videoRef={videoRef}
             rect={phase === 'LOCKED' ? lockedRect : displayRect}
             tuning={tuning}
-          />
+          /> */}
           <DebugMiniMap
             videoRef={videoRef}
             rect={phase === 'LOCKED' ? lockedRect : displayRect}
@@ -78,7 +74,7 @@ export default function ScreenCaptureView({
             aspect={aspect}
           />
 
-          <TuningPanel value={tuning} onChange={onTuningChange} />
+          <TuningPanel value={rawTuning} onChange={onTuningChange} />
         </>
       )}
     </div>

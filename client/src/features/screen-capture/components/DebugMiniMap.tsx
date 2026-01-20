@@ -2,18 +2,12 @@
 
 import { useEffect, useRef } from 'react'
 import { Rect, Aspect } from '../utils/types'
-import { applyTuning } from '../utils/rect'
+import { applyTuning, RectTuning } from '../utils/rect'
 
 type Props = {
   videoRef: React.RefObject<HTMLVideoElement | null>
   rect: Rect | null
-  tuning: {
-    scale: number
-    padX: number
-    padY: number
-    offXRatio: number
-    offYRatio: number
-  }
+  tuning: RectTuning
   phase: 'IDLE' | 'SEARCHING' | 'LOCKED'
   aspect: Aspect
 }
