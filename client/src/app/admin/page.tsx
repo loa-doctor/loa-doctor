@@ -6,8 +6,21 @@ type AdminMenu = 'raid' | 'gate' | 'phase'
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<{
+    id: string
+    message: string
+    type: 'success' | 'error'
+  } | null>(null)
   const [activeMenu, setActiveMenu] = useState<AdminMenu>('raid')
+
+  const showFeedback = (id: string, message: string, type: 'success' | 'error' = 'success') => {
+    setFeedback({ id, message, type })
+    // 3초 후 자동 사라짐 (선택사항)
+    setTimeout(() => {
+      setFeedback(prev => (prev?.id === id ? null : prev))
+    }, 3000)
+  }
+
   const menuClass = (key: AdminMenu) =>
     `w-full text-left px-3 py-2 rounded-lg text-sm transition-colors
    ${
@@ -17,9 +30,10 @@ export default function AdminPage() {
    }`
 
   const resetRaid = async () => {
+    const ID = 'reset'
     try {
       setLoading(true)
-      setResult(null)
+      setFeedback(null)
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/reset`, {
         method: 'POST',
@@ -27,18 +41,19 @@ export default function AdminPage() {
 
       if (!res.ok) throw new Error('요청 실패')
 
-      setResult('레이드 데이터 초기화 완료')
+      showFeedback(ID, '레이드 데이터 초기화 완료')
     } catch (err) {
-      setResult('초기화 실패')
+      showFeedback(ID, '초기화 실패', 'error')
     } finally {
       setLoading(false)
     }
   }
 
   const addKamenGate3Phase = async () => {
+    const ID = 'gate3'
     try {
       setLoading(true)
-      setResult(null)
+      setFeedback(null)
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/add-guides`, {
         method: 'POST',
@@ -56,12 +71,58 @@ export default function AdminPage() {
       if (!res.ok) throw new Error('요청 실패')
 
       const data = await res.json()
-      setResult(`Phase ${data.inserted}개 생성 완료`)
+      showFeedback(ID, `Phase ${data.inserted}개 생성 완료 (3관문)`)
     } catch (err) {
-      setResult('Phase 생성 실패')
+      showFeedback(ID, 'Phase 생성 실패', 'error')
     } finally {
       setLoading(false)
     }
+  }
+
+  const addKamenGate1Phase = async () => {
+    const ID = 'gate1'
+    try {
+      setLoading(true)
+      setFeedback(null)
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/add-guides`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          boss: '카멘',
+          difficulties: ['노말'],
+          gates: [1],
+          reset: true,
+          maxLine: 100, // 테스트용 100줄
+        }),
+      })
+
+      if (!res.ok) throw new Error('요청 실패')
+
+      const data = await res.json()
+      showFeedback(ID, `Phase ${data.inserted}개 생성 완료 (1관문)`)
+    } catch (err) {
+      showFeedback(ID, 'Phase 생성 실패', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 공통 결과 UI 렌더러
+  const renderFeedback = (id: string) => {
+    if (feedback?.id !== id) return null
+    const isError = feedback.type === 'error'
+    return (
+      <div
+        className={`text-xs rounded-lg px-3 py-2 mt-2 animate-in fade-in slide-in-from-top-1 ${
+          isError ? 'bg-red-500/20 text-red-200' : 'bg-green-500/20 text-green-300'
+        }`}
+      >
+        {feedback.message}
+      </div>
+    )
   }
 
   return (
@@ -120,7 +181,7 @@ export default function AdminPage() {
                   {loading ? '초기화 중...' : '레이드 초기화 실행'}
                 </button>
 
-                {result && <div className="text-xs mt-2">{result}</div>}
+                {renderFeedback('reset')}
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
@@ -145,11 +206,32 @@ export default function AdminPage() {
                   {loading ? 'Phase 생성 중...' : '카멘 3관문 Phase 생성'}
                 </button>
 
-                {result && (
-                  <div className="text-xs text-slate-300 bg-black/30 rounded-lg px-3 py-2">
-                    {result}
-                  </div>
-                )}
+                {renderFeedback('gate3')}
+              </div>
+
+              {/* 카멘 1관문 (테스트) 추가 */}
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
+                <h3 className="font-semibold text-sm">카멘 1관문(가디언/테스트) Phase 생성</h3>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  카멘 1관문 가이드 생성 (테스트용 100줄)
+                  <br />
+                  (100줄 시작, 10줄 단위 기믹)
+                </p>
+
+                <button
+                  onClick={addKamenGate1Phase}
+                  disabled={loading}
+                  className="
+                    w-full py-3 rounded-xl
+                    bg-purple-600 hover:bg-purple-500
+                    disabled:opacity-50
+                    font-bold text-sm transition-all
+                    "
+                >
+                  {loading ? 'Phase 생성 중...' : '카멘 1관문(테스트) Phase 생성'}
+                </button>
+                {renderFeedback('gate1')}
               </div>
             </div>
           </main>
