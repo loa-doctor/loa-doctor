@@ -6,9 +6,12 @@ export const useTesseractOCR = () => {
   const [isLoading, setIsLoading] = useState(false)
   const lastValueRef = useRef<number | null>(null)
 
+  const processingRef = useRef(false)
+
   const recognize = useCallback(
     async (canvas: HTMLCanvasElement, onLineDetected?: (line: number) => void) => {
-      if (isLoading) return
+      if (processingRef.current) return
+      processingRef.current = true
       setIsLoading(true)
 
       try {
@@ -18,28 +21,18 @@ export const useTesseractOCR = () => {
         setLineText(text)
 
         const n = parseInt(text, 10)
-
         if (!isNaN(n)) {
-          // 리트라이(갑자기 숫자가 커짐) 허용 로직
-          // 줄어드는 방향에서만 급격한 변화(-50줄 이상)를 오인식으로 차단
-          if (lastValueRef.current !== null) {
-            const diff = n - lastValueRef.current
-            if (diff < -50) {
-              setIsLoading(false)
-              return
-            }
-          }
-
           onLineDetected?.(n)
           lastValueRef.current = n
         }
       } catch (err) {
         console.error('OCR Error:', err)
       } finally {
+        processingRef.current = false
         setIsLoading(false)
       }
     },
-    [isLoading]
+    [] // 의존성 제거로 인한 인터벌 안정화
   )
 
   const stop = useCallback(() => {

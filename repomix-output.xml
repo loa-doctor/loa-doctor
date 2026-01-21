@@ -1,0 +1,2453 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.nvmrc
+client/.gitignore
+client/.prettierignore
+client/.prettierrc
+client/eslint.config.mjs
+client/next.config.ts
+client/package.json
+client/postcss.config.cjs
+client/public/file.svg
+client/public/globe.svg
+client/public/next.svg
+client/public/vercel.svg
+client/public/window.svg
+client/README.md
+client/src/app/admin/page.tsx
+client/src/app/analyze/AnalyzeClient.tsx
+client/src/app/analyze/page.tsx
+client/src/app/globals.css
+client/src/app/layout.tsx
+client/src/app/page.tsx
+client/src/app/test/page.tsx
+client/src/app/test/readme.md
+client/src/components/readme.md
+client/src/features/readme.md
+client/src/features/screen-capture/components/DebugMiniMap.tsx
+client/src/features/screen-capture/components/GameCanvas.tsx
+client/src/features/screen-capture/components/OCRPreviewCanvas.tsx
+client/src/features/screen-capture/components/ScreenCaptureView.tsx
+client/src/features/screen-capture/components/TuningPanel.tsx
+client/src/features/screen-capture/components/TuningRow.tsx
+client/src/features/screen-capture/hooks/useAspectCalibration.ts
+client/src/features/screen-capture/hooks/useScreenShare.ts
+client/src/features/screen-capture/hooks/useTesseractOCR.ts
+client/src/features/screen-capture/ScreenCaptureContainer.tsx
+client/src/features/screen-capture/utils/rect.ts
+client/src/features/screen-capture/utils/storageKeys.ts
+client/src/features/screen-capture/utils/types.ts
+client/src/readme.md
+client/tailwind.config.cjs
+client/tsconfig.json
+package.json
+README.md
+server/.env
+server/.prettierignore
+server/.prettierrc
+server/package.json
+server/src/db/mongo.ts
+server/src/index.ts
+server/src/models/Boss.ts
+server/src/models/Difficulty.ts
+server/src/models/Gate.ts
+server/src/models/Phaseguide.ts
+server/src/models/Raid.ts
+server/src/models/RaidGuide.ts
+server/src/routes/raid.ts
+server/src/utils/generateKamenGate3Guides.ts
+server/tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".nvmrc">
+20.9.0
+</file>
+
+<file path="client/.gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+</file>
+
+<file path="client/.prettierignore">
+.next
+node_modules
+dist
+build
+out
+coverage
+public
+</file>
+
+<file path="client/.prettierrc">
+{
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "useTabs": false,
+  "printWidth": 100,
+  "trailingComma": "es5",
+  "arrowParens": "avoid",
+  "endOfLine": "lf"
+}
+</file>
+
+<file path="client/public/file.svg">
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+</file>
+
+<file path="client/public/globe.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+</file>
+
+<file path="client/public/next.svg">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+</file>
+
+<file path="client/public/vercel.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+</file>
+
+<file path="client/public/window.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+</file>
+
+<file path="client/README.md">
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+</file>
+
+<file path="client/src/components/readme.md">
+
+</file>
+
+<file path="client/src/features/readme.md">
+
+</file>
+
+<file path="client/src/features/screen-capture/components/TuningRow.tsx">
+'use client'
+
+type Props = {
+  label: string
+  value: number
+  displayValue?: string
+  min: number
+  max: number
+  step: number
+  onChange: (v: number) => void
+}
+
+export function TuningRow({
+  label,
+  value,
+  displayValue,
+  min,
+  max,
+  step,
+  onChange,
+}: Props) {
+  return (
+    <div className="space-y-1">
+      <div className="text-sm font-medium">
+        {label}:{' '}
+        <span className="font-mono tabular-nums">
+          {displayValue ?? value}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={e => onChange(Number(e.target.value))}
+          className="flex-1"
+        />
+
+        <input
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={e => onChange(Number(e.target.value))}
+          onFocus={e => e.target.select()}
+          className="
+            w-28
+            px-2 py-1
+            text-sm
+            bg-zinc-900
+            border border-zinc-700
+            rounded
+            font-mono
+            tabular-nums
+          "
+        />
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="client/src/features/screen-capture/hooks/useAspectCalibration.ts">
+import { useEffect, useState } from 'react'
+import { Rect, Aspect } from '../utils/types'
+import { calcLargestRect, pickBestRect, lerpRect } from '../utils/rect'
+
+export function useAspectCalibration(videoRef: React.RefObject<HTMLVideoElement | null>) {
+  const [phase, setPhase] = useState<'IDLE' | 'SEARCHING' | 'LOCKED'>('IDLE')
+  const [aspect, setAspect] = useState<Aspect>('UNKNOWN')
+  const [displayRect, setDisplayRect] = useState<Rect | null>(null)
+  const [lockedRect, setLockedRect] = useState<Rect | null>(null)
+
+  useEffect(() => {
+    if (phase !== 'SEARCHING') return
+    const video = videoRef.current
+    if (!video) return
+
+    let raf = 0
+    let start = 0
+    let last: Rect | null = null
+
+    const tick = (ts: number) => {
+      if (!start) start = ts
+      if (!video.videoWidth) return (raf = requestAnimationFrame(tick))
+
+      const w = video.videoWidth
+      const h = video.videoHeight
+      const r21 = calcLargestRect(w, h, '21:9')
+      const r16 = calcLargestRect(w, h, '16:9')
+      const best = pickBestRect(w, h)
+      if (!r21 || !r16 || !best) return
+
+      const elapsed = ts - start
+      const d = 1200
+
+      if (elapsed < d) {
+        setAspect('21:9')
+        setDisplayRect(last ? lerpRect(last, r21, elapsed / d) : r21)
+        last = r21
+      } else if (elapsed < d * 2) {
+        setAspect('16:9')
+        setDisplayRect(last ? lerpRect(last, r16, (elapsed - d) / d) : r16)
+        last = r16
+      } else if (elapsed < d * 3) {
+        setAspect(best.aspect)
+        setDisplayRect(last ? lerpRect(last, best, (elapsed - d * 2) / d) : best)
+        last = best
+      } else {
+        setLockedRect(best)
+        setDisplayRect(best)
+        setPhase('LOCKED')
+        return
+      }
+
+      raf = requestAnimationFrame(tick)
+    }
+
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [phase])
+
+  return {
+    phase,
+    aspect,
+    displayRect,
+    lockedRect,
+    startSearch: () => setPhase('SEARCHING'),
+    reset: () => {
+      setPhase('IDLE')
+      setAspect('UNKNOWN')
+      setDisplayRect(null)
+      setLockedRect(null)
+    },
+  }
+}
+</file>
+
+<file path="client/src/features/screen-capture/utils/storageKeys.ts">
+export const STORAGE_KEYS = {
+  TUNING: 'loa-doctor:tuning',
+  // 이후 확장
+  // OCR_DEBUG: 'loa-doctor:ocr-debug',
+  // LAST_RAID: 'loa-doctor:last-raid',
+} as const
+</file>
+
+<file path="client/tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="package.json">
+{
+  "devDependencies": {
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
+  }
+}
+</file>
+
+<file path="server/.prettierignore">
+node_modules
+dist
+coverage
+.env
+.env.*
+</file>
+
+<file path="server/.prettierrc">
+{
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "useTabs": false,
+  "printWidth": 100,
+  "trailingComma": "es5",
+  "arrowParens": "avoid",
+  "endOfLine": "lf"
+}
+</file>
+
+<file path="server/src/models/Boss.ts">
+import { Schema, model, Types } from 'mongoose'
+
+const BossSchema = new Schema(
+  {
+    name: { type: String, required: true, unique: true }, // "카멘"
+  },
+  { timestamps: true }
+)
+
+export const Boss = model('Boss', BossSchema)
+</file>
+
+<file path="server/src/models/Difficulty.ts">
+import { Schema, model, Types } from 'mongoose'
+
+const DifficultySchema = new Schema(
+  {
+    bossId: {
+      type: Types.ObjectId,
+      ref: 'Boss',
+      required: true,
+      index: true,
+    },
+    name: {
+      type: String,
+      required: true, // "노말", "하드", "헬"
+    },
+    order: {
+      type: Number,
+      default: 0, // UI 정렬용
+    },
+  },
+  { timestamps: true }
+)
+
+DifficultySchema.index({ bossId: 1, name: 1 }, { unique: true })
+
+export const Difficulty = model('Difficulty', DifficultySchema)
+</file>
+
+<file path="server/src/models/Gate.ts">
+import { Schema, model, Types } from 'mongoose'
+
+const GateSchema = new Schema(
+  {
+    difficultyId: {
+      type: Types.ObjectId,
+      ref: 'Difficulty',
+      required: true,
+      index: true,
+    },
+    gateNumber: {
+      type: Number,
+      required: true, // 1,2,3
+    },
+    name: {
+      type: String,
+      required: true, // "1관문"
+    },
+  },
+  { timestamps: true }
+)
+
+GateSchema.index(
+  { difficultyId: 1, gateNumber: 1 },
+  { unique: true }
+)
+
+export const Gate = model('Gate', GateSchema)
+</file>
+
+<file path="server/src/models/Phaseguide.ts">
+import { Schema, model, Types } from 'mongoose'
+
+const PhaseGuideSchema = new Schema(
+  {
+    gateId: {
+      type: Types.ObjectId,
+      ref: 'Gate',
+      required: true,
+      index: true,
+    },
+    line: {
+      type: Number,
+      required: true, // 255, 210, 180 ...
+    },
+    phase: {
+      type: String,
+      required: true, // "1페이즈"
+    },
+    hint: {
+      type: String,
+      required: true, // 공략 설명
+    },
+  },
+  { timestamps: true }
+)
+
+PhaseGuideSchema.index({ gateId: 1, line: -1 })
+
+export const PhaseGuide = model('PhaseGuide', PhaseGuideSchema)
+</file>
+
+<file path="server/tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
+</file>
+
+<file path="client/eslint.config.mjs">
+import { defineConfig, globalIgnores } from 'eslint/config'
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTs from 'eslint-config-next/typescript'
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    '.next/**',
+    'out/**',
+    'build/**',
+    'next-env.d.ts',
+  ]),
+])
+
+export default eslintConfig
+</file>
+
+<file path="client/next.config.ts">
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:4000/:path*',
+      },
+    ]
+  },
+}
+
+module.exports = nextConfig
+</file>
+
+<file path="client/postcss.config.cjs">
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+</file>
+
+<file path="client/src/app/globals.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 기본 리셋 / 테스트용 */
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+:root {
+  --bg-main: #020617;
+  --bg-panel: #0f172a;
+  --border: #1e293b;
+}
+</file>
+
+<file path="client/src/app/test/readme.md">
+# 화면 비율
+
+21:9 or 16:9
+</file>
+
+<file path="client/src/features/screen-capture/components/DebugMiniMap.tsx">
+'use client'
+
+import { useEffect, useRef } from 'react'
+import { Rect, Aspect } from '../utils/types'
+import { applyTuning, RectTuning } from '../utils/rect'
+
+type Props = {
+  videoRef: React.RefObject<HTMLVideoElement | null>
+  rect: Rect | null
+  tuning: RectTuning
+  phase: 'IDLE' | 'SEARCHING' | 'LOCKED'
+  aspect: Aspect
+}
+
+export default function DebugMiniMap({ videoRef, rect, tuning, phase, aspect }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const video = videoRef.current
+    if (!canvas || !video || !rect) return
+    if (!video.videoWidth || !video.videoHeight) return
+
+    const ctx = canvas.getContext('2d')!
+
+    const maxW = 900
+    const scale = Math.min(1, maxW / video.videoWidth)
+
+    canvas.width = Math.round(video.videoWidth * scale)
+    canvas.height = Math.round(video.videoHeight * scale)
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    const tuned = applyTuning(rect, video.videoWidth, video.videoHeight, tuning)
+
+    const rx = Math.round(tuned.x * scale)
+    const ry = Math.round(tuned.y * scale)
+    const rw = Math.round(tuned.w * scale)
+    const rh = Math.round(tuned.h * scale)
+
+    // dim
+    ctx.save()
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    ctx.clearRect(rx, ry, rw, rh)
+    ctx.drawImage(video, tuned.x, tuned.y, tuned.w, tuned.h, rx, ry, rw, rh)
+
+    ctx.lineWidth = 3
+    ctx.strokeStyle = phase === 'LOCKED' ? '#22c55e' : '#f59e0b'
+    ctx.strokeRect(rx, ry, rw, rh)
+
+    ctx.fillStyle = 'rgba(0,0,0,0.7)'
+    ctx.fillRect(rx, Math.max(0, ry - 26), 180, 24)
+    ctx.fillStyle = '#fff'
+    ctx.font = '12px system-ui'
+    ctx.fillText(`${phase} • ${aspect}`, rx + 8, Math.max(16, ry - 10))
+    ctx.restore()
+  }, [videoRef, rect, tuning, phase, aspect])
+
+  return (
+    <div className="space-y-2">
+      <p className="font-semibold">디버그 미니맵</p>
+      <canvas
+        ref={canvasRef}
+        className="
+    border
+    max-w-lg
+    bg-black
+    rounded-lg
+  "
+      />
+    </div>
+  )
+}
+</file>
+
+<file path="client/src/features/screen-capture/components/OCRPreviewCanvas.tsx">
+'use client'
+
+import { forwardRef } from 'react'
+
+const OCRPreviewCanvas = forwardRef<HTMLCanvasElement>((_, ref) => {
+  return (
+    <div className="space-y-2 max-w-md">
+      <p className="font-semibold text-red-500">OCR 입력 캔버스 (실제 인식 영역)</p>
+      <canvas ref={ref} className="border border-red-500 w-full bg-black" />
+    </div>
+  )
+})
+
+OCRPreviewCanvas.displayName = 'OCRPreviewCanvas'
+export default OCRPreviewCanvas
+</file>
+
+<file path="client/src/features/screen-capture/hooks/useScreenShare.ts">
+import type { RefObject } from 'react'
+
+export function useScreenShare(videoRef: RefObject<HTMLVideoElement | null>) {
+  const start = async () => {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: 15 },
+      audio: false,
+    })
+
+    const video = videoRef.current
+    if (!video) return
+
+    video.srcObject = stream
+    await video.play()
+  }
+
+  const stop = () => {
+    const video = videoRef.current
+    const stream = video?.srcObject as MediaStream | null
+
+    stream?.getTracks().forEach(track => track.stop())
+
+    if (video) {
+      video.pause()
+      video.srcObject = null
+    }
+  }
+
+  return { start, stop }
+}
+</file>
+
+<file path="client/src/features/screen-capture/utils/types.ts">
+export type Aspect = '16:9' | '21:9' | 'UNKNOWN'
+
+export type Rect = {
+  aspect: Aspect
+  x: number
+  y: number
+  w: number
+  h: number
+}
+</file>
+
+<file path="client/src/readme.md">
+hi
+</file>
+
+<file path="client/tailwind.config.cjs">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './app/**/*.{js,ts,jsx,tsx}',
+    './src/app/**/*.{js,ts,jsx,tsx}',
+    './src/app/*.{js,ts,jsx,tsx}',
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './src/pages/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './src/components/**/*.{js,ts,jsx,tsx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+</file>
+
+<file path="server/.env">
+# 서버 포트
+PORT=4000
+
+# MongoDB
+MONGO_URI=mongodb://127.0.0.1:27017/loa-doctor
+
+# 환경
+NODE_ENV=development
+</file>
+
+<file path="server/src/db/mongo.ts">
+import mongoose from 'mongoose'
+
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/loa-doctor'
+
+export const connectMongo = async () => {
+  try {
+    await mongoose.connect(MONGO_URI)
+    console.log('MongoDB connected')
+  } catch (err) {
+    console.error('MongoDB connection error', err)
+    process.exit(1)
+  }
+}
+</file>
+
+<file path="server/src/models/Raid.ts">
+// import { Schema, model } from 'mongoose'
+
+// const GateSchema = new Schema({
+//   gateNumber: Number,     // 1,2,3,4
+//   name: String            // "1관문"
+// })
+
+// const RaidSchema = new Schema({
+//   name: { type: String, required: true }, // "카멘"
+//   gates: [GateSchema]
+// })
+
+// export const Raid = model('Raid', RaidSchema)
+</file>
+
+<file path="server/src/models/RaidGuide.ts">
+// import { Schema, model } from 'mongoose'
+
+// const RaidGuideSchema = new Schema({
+//   raid: { type: String, required: true },        // 카멘
+//   gate: { type: Number, required: true },        // 3
+//   line: { type: Number, required: true },        // 1000, 900, ...
+//   phase: { type: String, required: true },       // "1000줄"
+//   hint: { type: String, required: true },        // 설명
+// })
+
+// RaidGuideSchema.index({ raid: 1, gate: 1, line: -1 })
+
+// export const RaidGuide = model('RaidGuide', RaidGuideSchema)
+</file>
+
+<file path="client/src/app/admin/page.tsx">
+'use client'
+
+import { useState } from 'react'
+
+type AdminMenu = 'raid' | 'gate' | 'phase'
+
+export default function AdminPage() {
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+  const [activeMenu, setActiveMenu] = useState<AdminMenu>('raid')
+  const menuClass = (key: AdminMenu) =>
+    `w-full text-left px-3 py-2 rounded-lg text-sm transition-colors
+   ${
+     activeMenu === key
+       ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+       : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+   }`
+
+  const resetRaid = async () => {
+    try {
+      setLoading(true)
+      setResult(null)
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/reset`, {
+        method: 'POST',
+      })
+
+      if (!res.ok) throw new Error('요청 실패')
+
+      setResult('레이드 데이터 초기화 완료')
+    } catch (err) {
+      setResult('초기화 실패')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const addKamenGate3Phase = async () => {
+    try {
+      setLoading(true)
+      setResult(null)
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/add-guides`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          boss: '카멘',
+          difficulties: ['노말', '하드'],
+          gates: [1, 2, 3],
+          reset: true,
+        }),
+      })
+
+      if (!res.ok) throw new Error('요청 실패')
+
+      const data = await res.json()
+      setResult(`Phase ${data.inserted}개 생성 완료`)
+    } catch (err) {
+      setResult('Phase 생성 실패')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0f111a] text-slate-100 flex flex-col">
+      {/* Top Bar */}
+      <header className="h-14 px-6 flex items-center border-b border-white/10 bg-[#0f111a]/80 backdrop-blur">
+        <h1 className="font-bold text-lg">LOA Doctor Admin</h1>
+        <span className="ml-3 text-[10px] text-slate-500 font-mono">DEV MODE</span>
+      </header>
+
+      <div className="flex flex-1">
+        <aside className="w-64 border-r border-white/10 p-4 space-y-4 bg-black/20">
+          <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">Data Control</div>
+
+          <button
+            className="w-full text-left px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm"
+            onClick={() => {
+              window.location.href = '/'
+            }}
+          >
+            홈으로
+          </button>
+
+          <button onClick={() => setActiveMenu('raid')} className={menuClass('raid')}>
+            레이드 관리
+          </button>
+
+          <button onClick={() => setActiveMenu('gate')} className={menuClass('gate')}>
+            관문 관리
+          </button>
+
+          <button onClick={() => setActiveMenu('phase')} className={menuClass('phase')}>
+            Phase 관리
+          </button>
+        </aside>
+
+        {/* Main Content */}
+        {activeMenu === 'raid' && (
+          <main className="flex-1 p-8 overflow-auto">
+            <h2 className="text-xl font-bold mb-6">레이드 데이터 관리</h2>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {/* Card */}
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
+                <h3 className="font-semibold text-sm">전체 레이드 초기화</h3>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  모든 레이드 기초 값으로 다시 생성
+                </p>
+
+                <button
+                  onClick={resetRaid}
+                  disabled={loading}
+                  className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 font-bold text-sm transition-all"
+                >
+                  {loading ? '초기화 중...' : '레이드 초기화 실행'}
+                </button>
+
+                {result && <div className="text-xs mt-2">{result}</div>}
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
+                <h3 className="font-semibold text-sm">카멘 3관문 Phase 자동 생성</h3>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  카멘 3관문 줄 수 기반 Phase 가이드를 자동으로 생성합니다.
+                  <br />
+                  (1000 → 10줄, 기존 데이터는 초기화됩니다)
+                </p>
+
+                <button
+                  onClick={addKamenGate3Phase}
+                  disabled={loading}
+                  className="
+                    w-full py-3 rounded-xl
+                    bg-blue-600 hover:bg-blue-500
+                    disabled:opacity-50
+                    font-bold text-sm transition-all
+                    "
+                >
+                  {loading ? 'Phase 생성 중...' : '카멘 3관문 Phase 생성'}
+                </button>
+
+                {result && (
+                  <div className="text-xs text-slate-300 bg-black/30 rounded-lg px-3 py-2">
+                    {result}
+                  </div>
+                )}
+              </div>
+            </div>
+          </main>
+        )}
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="client/src/app/layout.tsx">
+import './globals.css'
+import type { ReactNode } from 'react'
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="ko">
+      <body className="bg-black text-white">{children}</body>
+    </html>
+  )
+}
+</file>
+
+<file path="client/src/features/screen-capture/components/GameCanvas.tsx">
+'use client'
+
+import { useEffect, useRef } from 'react'
+import { Rect } from '../utils/types'
+import { applyTuning, RectTuning } from '../utils/rect' // ← 기존 함수 그대로 이동해두면 됨
+
+type Props = {
+  videoRef: React.RefObject<HTMLVideoElement | null>
+  rect: Rect | null
+  tuning: RectTuning
+}
+
+export default function GameCanvas({ videoRef, rect, tuning }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const video = videoRef.current
+    if (!canvas || !video || !rect) return
+    if (!video.videoWidth || !video.videoHeight) return
+
+    const tuned = applyTuning(rect, video.videoWidth, video.videoHeight, tuning)
+
+    const ctx = canvas.getContext('2d')!
+    canvas.width = tuned.w
+    canvas.height = tuned.h
+
+    ctx.drawImage(video, tuned.x, tuned.y, tuned.w, tuned.h, 0, 0, tuned.w, tuned.h)
+  }, [videoRef, rect, tuning])
+
+  return (
+    <div className="space-y-2">
+      <p className="font-semibold">게임 화면 (크롭 결과)</p>
+      <div className="flex">
+        <canvas
+          ref={canvasRef}
+          className="
+      border
+      max-w-lg
+      aspect-video
+      bg-black
+      rounded-lg
+      shadow-md
+    "
+        />
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="client/src/features/screen-capture/utils/rect.ts">
+import { Rect, Aspect } from './types'
+
+/* =====================================================
+ * 기본 Rect 계산 (Aspect 기반)
+ * ===================================================== */
+
+/**
+ * 주어진 frame 안에서 특정 비율(16:9 / 21:9)의
+ * 가장 큰 중앙 Rect 계산
+ */
+export function calcLargestRect(frameW: number, frameH: number, aspect: Aspect): Rect | null {
+  const ratio = aspect === '21:9' ? 21 / 9 : aspect === '16:9' ? 16 / 9 : 0
+
+  if (!ratio) return null
+
+  let w = frameW
+  let h = Math.floor(w / ratio)
+
+  if (h > frameH) {
+    h = frameH
+    w = Math.floor(h * ratio)
+  }
+
+  if (w <= 0 || h <= 0) return null
+
+  return {
+    aspect,
+    x: Math.floor((frameW - w) / 2),
+    y: Math.floor((frameH - h) / 2),
+    w,
+    h,
+  }
+}
+
+/**
+ * 16:9 / 21:9 중 면적이 더 큰 Rect 선택
+ */
+export function pickBestRect(frameW: number, frameH: number): Rect | null {
+  const r21 = calcLargestRect(frameW, frameH, '21:9')
+  const r16 = calcLargestRect(frameW, frameH, '16:9')
+
+  const list = [r21, r16].filter(Boolean) as Rect[]
+  if (!list.length) return null
+
+  return list.reduce((a, b) => (a.w * a.h > b.w * b.h ? a : b))
+}
+
+/* =====================================================
+ * 애니메이션 보간
+ * ===================================================== */
+
+export function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t
+}
+
+export function lerpRect(from: Rect, to: Rect, t: number): Rect {
+  return {
+    aspect: to.aspect,
+    x: Math.round(lerp(from.x, to.x, t)),
+    y: Math.round(lerp(from.y, to.y, t)),
+    w: Math.round(lerp(from.w, to.w, t)),
+    h: Math.round(lerp(from.h, to.h, t)),
+  }
+}
+
+/* =====================================================
+ * Rect Tuning (미세 조정)
+ * ===================================================== */
+
+export type RectTuning = {
+  scale: number // 0.05 ~ 1.0
+  padX: number // px
+  padY: number // px
+  offXRatio: number // -0.5 ~ 0.5
+  offYRatio: number // -0.5 ~ 0.5
+  threshold: number // 10 ~ 50
+}
+
+/**
+ * LOCK된 기준 Rect에 미세 조정 적용
+ */
+export function applyTuning(base: Rect, frameW: number, frameH: number, tuning: RectTuning): Rect {
+  // scale
+  const scaledW = Math.round(base.w * tuning.scale)
+  const scaledH = Math.round(base.h * tuning.scale)
+
+  // center
+  const cx = base.x + base.w / 2
+  const cy = base.y + base.h / 2
+
+  // offset (ratio → px)
+  const offXPx = Math.round(base.w * tuning.offXRatio)
+  const offYPx = Math.round(base.h * tuning.offYRatio)
+
+  // position
+  let x = Math.round(cx - scaledW / 2) + offXPx + tuning.padX
+  let y = Math.round(cy - scaledH / 2) + offYPx + tuning.padY
+  let w = scaledW - tuning.padX * 2
+  let h = scaledH - tuning.padY * 2
+
+  // minimum
+  if (w < 1) w = 1
+  if (h < 1) h = 1
+
+  // clamp
+  if (x < 0) x = 0
+  if (y < 0) y = 0
+  if (x + w > frameW) w = frameW - x
+  if (y + h > frameH) h = frameH - y
+
+  return {
+    aspect: base.aspect,
+    x,
+    y,
+    w,
+    h,
+  }
+}
+</file>
+
+<file path="README.md">
+# 🩺 LOA Doctor
+
+**LOA Doctor**는  
+로스트아크 플레이 중 **실시간 화면 공유를 기반으로 보스 UI를 분석**하고,  
+현재 상황에 맞는 **공략 정보를 Picture-in-Picture(PiP)** 형태로 제공하는 웹 서비스입니다.
+
+로아를 하는데 있어서 가장 큰 장벽인 트라이의 두려움을 줄이고자 도움을 받을 수 있는 사이트를 개발하기로 하였습니다.
+
+---
+
+## 🎯 프로젝트 목표
+
+- 로스트아크 보스전 중 **실시간 화면 트래킹**
+- 보스 체력, 패턴 구간 등 **시각 정보 자동 인식**
+- 상황에 맞는 **공략 가이드 즉시 제공**
+- 게임 플레이 흐름을 방해하지 않는 **PiP UI 제공**
+
+---
+
+## 🧠 핵심 아이디어
+
+1. **WebRTC 화면 공유**
+   - 사용자가 브라우저를 통해 게임 화면을 공유
+2. **실시간 화면 분석**
+   - OpenCV 기반으로 보스 HP 바, 패턴 전환 시점 등을 인식
+3. **공략 매칭**
+   - 현재 보스 상태에 맞는 공략 데이터 매칭
+4. **Picture-in-Picture 출력**
+   - 영상 위가 아닌, OS 레벨 PiP로 공략 정보 표시
+
+---
+
+## 🛠 기술 스택
+
+### Frontend
+- **Next.js**
+- **TypeScript**
+- **Tailwind CSS**
+- WebRTC (getDisplayMedia, RTCPeerConnection)
+- Picture-in-Picture API
+
+### Backend
+- **Node.js (Express)**
+- WebRTC Signaling
+- OpenCV (영상 프레임 분석)
+- (Optional) Worker / Queue 구조
+
+### Database
+- **MongoDB** (예정)
+  - 보스 정보
+  - 패턴 타이밍
+  - 공략 데이터
+
+---
+
+## 🚀 개발 단계 로드맵
+
+### Phase 1 – 기본 동작
+- [ ] WebRTC 화면 공유 연결
+- [ ] 서버로 영상 스트림 전달
+- [ ] PiP 기반 UI 출력
+
+### Phase 2 – 인식 & 분석
+- [ ] 보스 HP 바 영역 검출
+- [ ] 체력 구간별 상태 분기
+- [ ] 프레임 샘플링 최적화
+
+### Phase 3 – 공략 연동
+- [ ] 보스별 공략 데이터 설계
+- [ ] 상태 → 공략 매칭 로직
+- [ ] PiP 내 단계별 가이드 표시
+
+### Phase 4 – 확장
+- [ ] 보스 선택 자동 인식
+- [ ] 사용자 커스터마이징
+- [ ] 성능 최적화 및 배포
+
+---
+
+## ⚠️ 참고 사항
+
+- 본 프로젝트는 **개인 학습 및 기술 실험 목적**으로 진행됩니다.
+- 게임 클라이언트에 직접적인 개입은 하지 않습니다.
+- 모든 분석은 **사용자가 공유한 화면 데이터 기반**으로만 이루어집니다.
+
+---
+
+## ✨ Motivation
+
+LOA Doctor는  
+게임을 더 잘 ‘외우기’ 위한 도구가 아니라,  
+플레이어가 **판단에만 집중할 수 있도록 돕는 보조 시스템**을 지향합니다.
+</file>
+
+<file path="server/package.json">
+{
+  "name": "server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "prettier": "^3.7.4",
+    "tsx": "^4.7.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mongoose": "^9.1.3"
+  }
+}
+</file>
+
+<file path="server/src/index.ts">
+import express from 'express'
+import cors from 'cors'
+import 'dotenv/config'
+import { connectMongo } from './db/mongo.js'
+import raidRouter from './routes/raid.js'
+
+const app = express()
+
+connectMongo()
+
+app.use(cors())
+app.use(express.json())
+app.use('/api/raids', raidRouter)
+
+app.get('/health', (req, res) => {
+  res.json({
+    ok: true,
+    service: 'loa-doctor-server',
+  })
+})
+
+const PORT = process.env.PORT || 4000
+app.listen(PORT, () => {
+  console.log(`${PORT} 포트 수신중..`)
+})
+</file>
+
+<file path="server/src/routes/raid.ts">
+import { Router } from 'express'
+import { Boss } from '../models/Boss.js'
+import { Difficulty } from '../models/Difficulty.js'
+import { Gate } from '../models/Gate.js'
+import { PhaseGuide } from '../models/Phaseguide.js'
+import { generateGateGuides } from '../utils/generateKamenGate3Guides.js'
+
+const router = Router()
+
+/* ============================
+ * GET /api/raids
+ * 보스 → 난이도 → 관문 구조 조회
+ * ============================ */
+router.get('/', async (_, res) => {
+  const bosses = await Boss.find().lean()
+
+  const result = []
+
+  for (const boss of bosses) {
+    const difficulties = await Difficulty.find({ bossId: boss._id }).sort({ order: 1 }).lean()
+
+    const diffWithGates = []
+
+    for (const diff of difficulties) {
+      const gates = await Gate.find({ difficultyId: diff._id }).sort({ gateNumber: 1 }).lean()
+
+      diffWithGates.push({
+        name: diff.name,
+        gates: gates.map(g => g.name),
+      })
+    }
+
+    result.push({
+      name: boss.name,
+      difficulties: diffWithGates,
+    })
+  }
+
+  res.json(result)
+})
+
+/* ============================
+ * GET /api/raids/guides
+ * PhaseGuide 조회 (프론트용)
+ * ============================ */
+router.get('/guides', async (req, res) => {
+  const { boss, difficulty, gate } = req.query
+
+  if (!boss || !difficulty || !gate) {
+    return res.status(400).json({ message: '파라미터 부족' })
+  }
+
+  const bossDoc = await Boss.findOne({ name: boss })
+  if (!bossDoc) return res.json([])
+
+  const diffDoc = await Difficulty.findOne({
+    bossId: bossDoc._id,
+    name: difficulty,
+  })
+  if (!diffDoc) return res.json([])
+
+  const gateDoc = await Gate.findOne({
+    difficultyId: diffDoc._id,
+    gateNumber: Number(gate),
+  })
+  if (!gateDoc) return res.json([])
+
+  const guides = await PhaseGuide.find({
+    gateId: gateDoc._id,
+  }).sort({ line: -1 })
+
+  res.json(guides)
+})
+
+/* ============================
+ * POST /api/raids/admin/reset
+ * ⚠️ 개발용 전체 초기화
+ * ============================ */
+router.post('/admin/reset', async (_, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ message: 'Not allowed in production' })
+  }
+
+  await PhaseGuide.deleteMany({})
+  await Gate.deleteMany({})
+  await Difficulty.deleteMany({})
+  await Boss.deleteMany({})
+
+  /* ---- Boss ---- */
+  const kamen = await Boss.create({ name: '카멘' })
+
+  /* ---- Difficulty ---- */
+  const normal = await Difficulty.create({
+    bossId: kamen._id,
+    name: '노말',
+    order: 1,
+  })
+
+  const hard = await Difficulty.create({
+    bossId: kamen._id,
+    name: '하드',
+    order: 2,
+  })
+
+  /* ---- Gate ---- */
+  // 노말 관문
+  for (let i = 1; i <= 3; i++) {
+    await Gate.create({
+      difficultyId: normal._id,
+      gateNumber: i,
+      name: `${i}관문`,
+    })
+  }
+
+  // 하드 관문
+  for (let i = 1; i <= 4; i++) {
+    await Gate.create({
+      difficultyId: hard._id,
+      gateNumber: i,
+      name: `${i}관문`,
+    })
+  }
+
+  res.json({ ok: true, message: 'Raid 구조 초기화 완료' })
+})
+
+/* ============================
+ * POST /api/raids/admin/add-guides
+ * ⚠️ 개발용 가이드 삽입
+ * ============================ */
+router.post('/admin/add-guides', async (req, res) => {
+  const {
+    boss = '카멘',
+    difficulties = ['노말', '하드'],
+    gates = [1, 2, 3],
+    reset = true,
+  } = req.body
+
+  const bossDoc = await Boss.findOne({ name: boss })
+  if (!bossDoc) {
+    return res.status(404).json({ message: 'Boss 없음' })
+  }
+
+  let totalInserted = 0
+
+  for (const difficultyName of difficulties) {
+    const diffDoc = await Difficulty.findOne({
+      bossId: bossDoc._id,
+      name: difficultyName,
+    })
+    if (!diffDoc) continue
+
+    for (const gateNumber of gates) {
+      const gateDoc = await Gate.findOne({
+        difficultyId: diffDoc._id,
+        gateNumber,
+      })
+      if (!gateDoc) continue
+
+      if (reset) {
+        await PhaseGuide.deleteMany({ gateId: gateDoc._id })
+      }
+
+      const baseGuides = generateGateGuides()
+
+      const guides = baseGuides.map(g => ({
+        gateId: gateDoc._id,
+        ...g,
+      }))
+
+      const inserted = await PhaseGuide.insertMany(guides)
+      totalInserted += inserted.length
+    }
+  }
+
+  res.json({
+    ok: true,
+    inserted: totalInserted,
+    message: '가이드 데이터 삽입 완료 (다중 난이도/관문)',
+  })
+})
+
+export default router
+</file>
+
+<file path="client/src/app/analyze/page.tsx">
+import AnalyzeClient from './AnalyzeClient'
+
+async function getRaidData() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids`, {
+    cache: 'no-store', // 또는 revalidates
+  })
+  return res.json()
+}
+
+export default async function AnalyzePage() {
+  const raids = await getRaidData()
+
+  return <AnalyzeClient raids={raids} />
+}
+</file>
+
+<file path="client/src/features/screen-capture/components/ScreenCaptureView.tsx">
+'use client'
+
+import { RectTuning } from '../utils/rect'
+import { Aspect, Rect } from '../utils/types'
+import DebugMiniMap from './DebugMiniMap'
+import GameCanvas from './GameCanvas'
+import OCRPreviewCanvas from './OCRPreviewCanvas'
+import TuningPanel from './TuningPanel'
+
+type Props = {
+  videoRef: React.RefObject<HTMLVideoElement | null>
+  ocrPreviewCanvasRef: React.RefObject<HTMLCanvasElement | null>
+
+  phase: 'IDLE' | 'SEARCHING' | 'LOCKED'
+  aspect: Aspect
+  displayRect: Rect | null
+  lockedRect: Rect | null
+
+  debugOn: boolean
+  onToggleDebug: () => void
+
+  lineText: string
+
+  tuning: RectTuning
+  rawTuning: RectTuning
+  onTuningChange: (v: Partial<Props['tuning']>) => void
+}
+
+export default function ScreenCaptureView({
+  videoRef,
+  phase,
+  aspect,
+  displayRect,
+  lockedRect,
+  debugOn,
+  onToggleDebug,
+  lineText,
+  tuning,
+  onTuningChange,
+  ocrPreviewCanvasRef,
+  rawTuning,
+}: Props) {
+  return (
+    <div className="p-6 space-y-5">
+      {/* 상태 바 */}
+      <div className="flex items-center gap-3">
+        <h1 className="text-xl font-bold">LoA Screen – Calibration</h1>
+
+        <button onClick={onToggleDebug} className="px-3 py-2 bg-zinc-800 text-white rounded">
+          디버그 {!debugOn ? '끄기' : '켜기'}
+        </button>
+
+        <div className="ml-auto text-sm">
+          상태 <b>{phase}</b> / 비율 <b className="text-red-500">{aspect}</b> / 줄수{' '}
+          <b className="text-green-400">{lineText}</b>
+        </div>
+      </div>
+
+      <OCRPreviewCanvas ref={ocrPreviewCanvasRef} />
+      <video ref={videoRef} className="hidden" />
+
+      {!debugOn && (
+        <>
+          {/* <GameCanvas
+            videoRef={videoRef}
+            rect={phase === 'LOCKED' ? lockedRect : displayRect}
+            tuning={tuning}
+          /> */}
+          <DebugMiniMap
+            videoRef={videoRef}
+            rect={phase === 'LOCKED' ? lockedRect : displayRect}
+            tuning={tuning}
+            phase={phase}
+            aspect={aspect}
+          />
+
+          <TuningPanel value={rawTuning} onChange={onTuningChange} />
+        </>
+      )}
+    </div>
+  )
+}
+</file>
+
+<file path="server/src/utils/generateKamenGate3Guides.ts">
+export function generateGateGuides() {
+  const guides: {
+    line: number
+    phase: string
+    hint: string
+  }[] = []
+
+  for (let line = 990; line >= 10; line -= 10) {
+    guides.push({
+      line,
+      phase: `${line}줄 기믹제목`,
+      hint: line <= 30 ? '광폭 임박 – 극딜 준비' : `${line}줄 – 집중 유지`,
+    })
+  }
+
+  return guides
+}
+</file>
+
+<file path="client/package.json">
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "next": "16.1.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@next/swc-win32-x64-msvc": "^16.1.1",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.23",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.1",
+    "postcss": "^8.5.6",
+    "prettier": "^3.7.4",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
+  }
+}
+</file>
+
+<file path="client/src/features/screen-capture/components/TuningPanel.tsx">
+'use client'
+
+import { useEffect } from 'react'
+import { STORAGE_KEYS } from '../utils/storageKeys'
+import { TuningRow } from './TuningRow'
+
+type Tuning = {
+  scale: number
+  padX: number
+  padY: number
+  offXRatio: number
+  offYRatio: number
+  threshold: number
+}
+
+type Props = {
+  value: Tuning
+  onChange: (v: Partial<Tuning>) => void
+}
+
+export default function TuningPanel({ value, onChange }: Props) {
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.TUNING, JSON.stringify(value))
+    } catch {}
+  }, [value])
+
+  return (
+    <div className="border rounded p-4 space-y-4 max-w-4xl">
+      <div className="font-semibold">사각형 튜닝</div>
+
+      <TuningRow
+        label="Scale"
+        value={value.scale}
+        displayValue={value.scale.toFixed(2)}
+        min={0.02}
+        max={1}
+        step={0.01}
+        onChange={v => onChange({ scale: v })}
+      />
+
+      <TuningRow
+        label="THRESHOLD"
+        value={value.threshold}
+        min={5}
+        max={200}
+        step={1}
+        onChange={v => onChange({ threshold: v })}
+      />
+
+      <TuningRow
+        label="OffsetXRatio"
+        value={value.offXRatio}
+        displayValue={value.offXRatio.toFixed(3)}
+        min={-0.5}
+        max={1.0}
+        step={0.001}
+        onChange={v => onChange({ offXRatio: v })}
+      />
+
+      <TuningRow
+        label="OffsetYRatio"
+        value={value.offYRatio}
+        displayValue={value.offYRatio.toFixed(3)}
+        min={-0.5}
+        max={0.5}
+        step={0.001}
+        onChange={v => onChange({ offYRatio: v })}
+      />
+
+      <div className="text-xs text-zinc-500">
+        LOCKED 이후에도 실시간 미세 조정 가능
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="client/src/features/screen-capture/hooks/useTesseractOCR.ts">
+import { useState, useRef, useCallback } from 'react'
+import Tesseract from 'tesseract.js'
+
+export const useTesseractOCR = () => {
+  const [lineText, setLineText] = useState<string>('')
+  const [isLoading, setIsLoading] = useState(false)
+  const lastValueRef = useRef<number | null>(null)
+
+  const recognize = useCallback(
+    async (canvas: HTMLCanvasElement, onLineDetected?: (line: number) => void) => {
+      if (isLoading) return
+      setIsLoading(true)
+
+      try {
+        const result = await Tesseract.recognize(canvas, 'eng')
+
+        const text = result.data.text.replace(/[^0-9]/g, '')
+        setLineText(text)
+
+        const n = parseInt(text, 10)
+
+        if (!isNaN(n)) {
+          // 리트라이(갑자기 숫자가 커짐) 허용 로직
+          // 줄어드는 방향에서만 급격한 변화(-50줄 이상)를 오인식으로 차단
+          if (lastValueRef.current !== null) {
+            const diff = n - lastValueRef.current
+            if (diff < -50) {
+              setIsLoading(false)
+              return
+            }
+          }
+
+          onLineDetected?.(n)
+          lastValueRef.current = n
+        }
+      } catch (err) {
+        console.error('OCR Error:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [isLoading]
+  )
+
+  const stop = useCallback(() => {
+    // 필요한 경우 Tesseract 워커 종료 로직 추가 가능
+    setLineText('')
+    lastValueRef.current = null
+  }, [])
+
+  return { lineText, recognize, stop, isLoading }
+}
+</file>
+
+<file path="client/src/app/page.tsx">
+'use client'
+
+import { useEffect, useState } from 'react'
+
+import Link from 'next/link'
+
+export default function HomePage() {
+  const [status, setStatus] = useState('loading...')
+
+  // 기존 API 헬스 체크 로직 유지
+
+  useEffect(() => {
+    fetch('/api/health')
+      .then(res => res.json())
+
+      .then(data => setStatus(JSON.stringify(data)))
+
+      .catch(() => setStatus('error'))
+  }, [])
+
+  return (
+    <div className="min-h-screen bg-[#0f111a] text-slate-100 selection:bg-blue-500/30">
+      {/* 네비게이션 바 */}
+
+      <nav className="border-b border-white/10 px-6 py-4 flex justify-between items-center">
+        <div className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+          LOA Doctor
+        </div>
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-6 pt-20 pb-16">
+        <div className="flex flex-col items-center text-center mb-16">
+          <div className="inline-block px-4 py-1.5 mb-6 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-medium">
+            실시간 로스트아크 레이드 공략
+          </div>
+
+          <h1 className="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight">
+            레이드 공략을 <br />
+            <span className="text-blue-500">실시간</span>으로 확인하세요
+          </h1>
+
+          <p className="text-lg text-slate-400 mb-10 max-w-2xl leading-relaxed">
+            LOA Doctor는 보스의 체력을 실시간으로 분석하여, <br />
+            다음 기믹과 공략 정보를 즉시 표시합니다. <br />
+            기믹을 놓치지 않고 완벽한 공략을 경험하세요!
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link
+              href="/analyze"
+              className="px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-lg transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+            >
+              지금 시작하기
+            </Link>
+          </div>
+        </div>
+
+        {/* 시스템 진단 섹션 (기존 코드 기능 통합) */}
+
+        <div className="max-w-md mx-auto mt-12 rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-sm">
+          <h2 className="text-sm font-semibold text-slate-400 mb-4 uppercase tracking-wider">
+            System Check
+          </h2>
+
+          {/* API 상태 체크 */}
+
+          <div className="mb-4 rounded-lg bg-black/40 p-3 text-sm border border-white/5">
+            <span className="font-semibold text-slate-300">API STATUS:</span>{' '}
+            <span className={status === 'error' ? 'text-red-400' : 'text-green-400'}>{status}</span>
+          </div>
+
+          {/* 반응형 디바이스 체크 */}
+
+          <div className="py-2 px-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center text-xs text-blue-300">
+            <span className="block sm:hidden">📱 Mobile Mode Optimized</span>
+
+            <span className="hidden sm:block md:hidden">📲 Tablet Mode Optimized</span>
+
+            <span className="hidden md:block">🖥 Desktop Mode Optimized</span>
+          </div>
+
+          <p className="mt-4 text-[10px] text-slate-500 text-center">
+            환경 진단 결과가 정상이면 분석을 시작할 수 있습니다.
+          </p>
+        </div>
+      </main>
+
+      {/* 하단 푸터 느낌의 특징 요약 */}
+
+      <section className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-white/5 mt-10">
+        <div className="text-center md:text-left">
+          <h3 className="font-bold text-slate-200">실시간 화면 분석</h3>
+
+          <p className="text-sm text-slate-500">OpenCV 기반 패턴 감지</p>
+        </div>
+
+        <div className="text-center md:text-left">
+          <h3 className="font-bold text-slate-200">PiP 모드 지원</h3>
+
+          <p className="text-sm text-slate-500">게임 창 위 가이드 오버레이</p>
+        </div>
+
+        <div className="text-center md:text-left">
+          <h3 className="font-bold text-slate-200">무설치 웹 서비스</h3>
+
+          <p className="text-sm text-slate-500">브라우저에서 즉시 실행</p>
+        </div>
+      </section>
+    </div>
+  )
+}
+</file>
+
+<file path="client/src/features/screen-capture/ScreenCaptureContainer.tsx">
+'use client'
+
+import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
+import ScreenCaptureView from './components/ScreenCaptureView'
+import { useScreenShare } from './hooks/useScreenShare'
+import { useAspectCalibration } from './hooks/useAspectCalibration'
+import { useTesseractOCR } from './hooks/useTesseractOCR'
+import { applyTuning, type RectTuning } from './utils/rect'
+import { STORAGE_KEYS } from './utils/storageKeys'
+
+export type ScreenCaptureHandle = {
+  startCapture: () => void
+  stopCapture: () => void
+}
+
+export const ScreenCaptureContainer = forwardRef<
+  ScreenCaptureHandle,
+  {
+    embed?: boolean
+    onLineDetected?: (line: number) => void
+  }
+>(function ScreenCaptureContainer({ embed = false, onLineDetected }, ref) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const ocrPreviewCanvasRef = useRef<HTMLCanvasElement>(null)
+
+  // ===== hooks =====
+  const { start, stop } = useScreenShare(videoRef)
+  const calibration = useAspectCalibration(videoRef)
+  const { lineText, recognize, stop: stopOCR } = useTesseractOCR()
+
+  useImperativeHandle(ref, () => ({
+    startCapture() {
+      start()
+      calibration.startSearch()
+    },
+    stopCapture() {
+      stop()
+      stopOCR()
+      calibration.reset()
+    },
+  }))
+
+  // ===== debug =====
+  const [debugOn, setDebugOn] = useState(true)
+
+  const DEFAULT_TUNING: RectTuning = {
+    scale: 0.05,
+    padX: 0,
+    padY: 0,
+    offXRatio: 0.15,
+    offYRatio: -0.43,
+    threshold: 50,
+  }
+
+  const [tuning, setTuning] = useState<RectTuning>(() => {
+    if (typeof window === 'undefined') return DEFAULT_TUNING
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.TUNING)
+      if (!saved) return DEFAULT_TUNING
+
+      return {
+        ...DEFAULT_TUNING,
+        ...JSON.parse(saved),
+      }
+    } catch {
+      return DEFAULT_TUNING
+    }
+  })
+
+  const handleTuningChange = (v: Partial<RectTuning>) => {
+    setTuning(prev => ({ ...prev, ...v }))
+  }
+
+  // ===== OCR ROI =====
+  const roi = { x: 0.15, y: 0.27, w: 0.7, h: 0.4 }
+  const scaleOCR = 4
+  const effectiveTuning =
+    calibration.phase === 'LOCKED'
+      ? tuning
+      : DEFAULT_TUNING
+  /**
+   * 프리뷰 + OCR 공용 draw 함수
+   */
+  const drawOCRPreview = useCallback(() => {
+    const video = videoRef.current
+    const canvas = ocrPreviewCanvasRef.current
+    if (!video || !canvas) return
+    if (!video.videoWidth || !video.videoHeight) return
+    if (!calibration.lockedRect) return
+
+    const tuned = applyTuning(
+      calibration.lockedRect,
+      video.videoWidth,
+      video.videoHeight,
+      effectiveTuning
+    )
+
+    const rx = Math.round(tuned.w * roi.x)
+    const ry = Math.round(tuned.h * roi.y)
+    const rw = Math.round(tuned.w * roi.w)
+    const rh = Math.round(tuned.h * roi.h)
+
+    if (rw < 10 || rh < 10) return
+
+    canvas.width = rw * scaleOCR
+    canvas.height = rh * scaleOCR
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.imageSmoothingEnabled = true
+    ctx.filter = 'grayscale(100%) contrast(110%)'
+
+    ctx.drawImage(video, tuned.x + rx, tuned.y + ry, rw, rh, 0, 0, canvas.width, canvas.height)
+
+    ctx.filter = 'none'
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const data = imageData.data
+
+    let sum = 0
+    let count = 0
+
+    for (let i = 0; i < data.length; i += 4) {
+      sum += data[i]
+      count++
+    }
+
+    const avg = sum / count
+    const THRESHOLD = avg + tuning.threshold // < 튜닝해야하는 값
+
+    for (let i = 0; i < data.length; i += 4) {
+      const v = data[i]
+      const t = v > THRESHOLD ? 255 : 0
+      data[i] = data[i + 1] = data[i + 2] = t
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+  }, [calibration.lockedRect, tuning])
+
+  /**
+   * OCR 루프 (느리게)
+   */
+  useEffect(() => {
+    if (calibration.phase !== 'LOCKED') return
+    const canvas = ocrPreviewCanvasRef.current
+    if (!canvas) return
+
+    const id = window.setInterval(() => {
+      recognize(canvas, line => {
+        onLineDetected?.(line)
+      })
+      drawOCRPreview()
+    }, 800)
+
+    return () => clearInterval(id)
+  }, [calibration.phase, recognize, drawOCRPreview, onLineDetected])
+
+  return (
+    <ScreenCaptureView
+      ocrPreviewCanvasRef={ocrPreviewCanvasRef}
+      videoRef={videoRef}
+      {...calibration}
+      debugOn={debugOn}
+      onToggleDebug={() => setDebugOn(v => !v)}
+      tuning={effectiveTuning}
+      rawTuning={tuning}
+      onTuningChange={handleTuningChange}
+      lineText={lineText}
+    />
+  )
+})
+</file>
+
+<file path="client/src/app/analyze/AnalyzeClient.tsx">
+'use client'
+
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  ScreenCaptureContainer,
+  ScreenCaptureHandle,
+} from '@/src/features/screen-capture/ScreenCaptureContainer'
+
+type Raid = {
+  name: string
+  difficulties: { name: string; gates: string[] }[]
+}
+
+type PhaseGuide = { line: number; phase: string; hint: string }
+type AnalysisStatus = 'IDLE' | 'RUNNING' | 'GUIDE' | 'RETRY_RESET'
+
+export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
+  const router = useRouter()
+  const pipWindowRef = useRef<Window | null>(null)
+  const captureRef = useRef<ScreenCaptureHandle | null>(null)
+
+  const [isCapturing, setIsCapturing] = useState(false)
+  const [selectedRaid, setSelectedRaid] = useState('카멘')
+  const [selectedDifficulty, setSelectedDifficulty] = useState('하드')
+  const [selectedGate, setSelectedGate] = useState('3관문')
+
+  const [rawHp, setRawHp] = useState<number>(0)
+  const [filteredHp, setFilteredHp] = useState<number>(0)
+  const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('IDLE')
+  const [currentGuide, setCurrentGuide] = useState({
+    hpPhase: '준비 완료',
+    hint: '인식된 HP에 따라 가이드를 미리 표시합니다.',
+  })
+
+  const [phaseGuides, setPhaseGuides] = useState<PhaseGuide[]>([])
+  const minLineReachedRef = useRef<number>(999)
+  const stabilityRef = useRef({ lastVal: 0, count: 0 })
+  const lastTriggeredLineRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    const gateNumber = Number(selectedGate.replace('관문', ''))
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE}/api/raids/guides?boss=${selectedRaid}&difficulty=${selectedDifficulty}&gate=${gateNumber}`
+    )
+      .then(res => res.json())
+      .then(data => {
+        setPhaseGuides(data.sort((a: any, b: any) => b.line - a.line))
+        resetSession()
+      })
+  }, [selectedRaid, selectedGate, selectedDifficulty])
+
+  const resetSession = useCallback(() => {
+    lastTriggeredLineRef.current = null
+    minLineReachedRef.current = 999
+    stabilityRef.current = { lastVal: 0, count: 0 }
+    setFilteredHp(0)
+    setAnalysisStatus('RETRY_RESET')
+    setCurrentGuide({ hpPhase: '전투 시작 대기', hint: 'HP 인식을 시작합니다.' })
+  }, [])
+
+  const handleLineDetected = useCallback(
+    (currentLine: number) => {
+      //TODO: 줄수가 2940 이런식으로 튀면 그냥 RawHP가 멈춰버리는 이슈 수정해야함.
+      setRawHp(currentLine)
+      // 1. 안정화 체크
+      if (stabilityRef.current.lastVal === currentLine) {
+        stabilityRef.current.count++
+      } else {
+        stabilityRef.current.lastVal = currentLine
+        stabilityRef.current.count = 0
+      }
+
+      // 2. 리트라이 판정 (90줄 이상으로 확 튀었을 때만)
+      // 77, 88 같은 오인식은 여기서 걸러지지 않도록 '패턴' 대신 '안정성'만 봅니다.
+      if (currentLine >= phaseGuides[0].line && minLineReachedRef.current < 50) {
+        if (stabilityRef.current.count >= 3) {
+          resetSession()
+        }
+        //return
+      }
+
+      // 3. [핵심] 지능형 역행 차단
+      // 줄 수는 '내려가는 것'이 정상입니다. 올라가는 것은 무조건 의심합니다.
+      if (currentLine > minLineReachedRef.current) {
+        // (A) 한 자릿수 구간 오인식 방어 (7줄인데 77이 들어오는 경우)
+        if (
+          minLineReachedRef.current < 10 &&
+          currentLine === minLineReachedRef.current * 10 + minLineReachedRef.current
+        ) {
+          //return // 77은 무시하고 기존 7을 유지 (압축하지 않음)
+        }
+
+        // (B) 미세한 인식 오차(±2줄)는 허용하되, 그 이상은 3초 이상 안정화되어야 인정
+        if (currentLine > minLineReachedRef.current + 2) {
+          //if (stabilityRef.current.count < 10) return // 약 3초간 버텨야 역행 인정
+        }
+      }
+
+      // 4. 데이터 확정
+      if (currentLine < minLineReachedRef.current) {
+        minLineReachedRef.current = currentLine
+      }
+      setFilteredHp(currentLine)
+
+      // 5. 가이드 매칭
+      const nextPreview = phaseGuides.find(guide => currentLine > guide.line)
+      if (nextPreview && nextPreview.line !== lastTriggeredLineRef.current) {
+        lastTriggeredLineRef.current = nextPreview.line
+        setCurrentGuide({
+          hpPhase: `${nextPreview.line}줄: ${nextPreview.phase}`,
+          hint: nextPreview.hint,
+        })
+        setAnalysisStatus('GUIDE')
+      }
+    },
+    [phaseGuides, resetSession]
+  )
+
+  // PiP 업데이트
+  const updatePipUI = useCallback(
+    (pipWin: Window) => {
+      const doc = pipWin.document
+      doc.body.innerHTML = ''
+      doc.body.className =
+        'bg-[#0a0a0c] text-[#e2e8f0] font-sans overflow-hidden select-none border-l-4 border-blue-600'
+      const root = doc.createElement('div')
+      root.className = 'flex flex-col h-full'
+      root.innerHTML = `
+      <div class="flex items-center justify-between px-4 py-2 bg-[#141417] border-b border-white/5">
+        <div class="flex flex-col">
+          <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter">RAID MONITOR</span>
+          <span class="text-[12px] font-bold text-white/90">${selectedRaid} ${selectedGate}</span>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex flex-col items-end opacity-40">
+            <span class="text-[7px] font-bold">RAW</span>
+            <span class="text-[11px] font-black">${rawHp}</span>
+          </div>
+          <div class="flex flex-col items-end pl-3 border-l border-white/10">
+            <span class="text-[9px] font-bold text-blue-500">HP</span>
+            <span class="text-[18px] font-black text-white">${filteredHp}</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 flex flex-col justify-center px-4 py-3 bg-gradient-to-b from-transparent to-blue-900/10">
+        <h2 class="text-[18px] font-black text-white leading-tight mb-1">${currentGuide.hpPhase}</h2>
+        <p class="text-[12px] text-slate-400 line-clamp-2">${currentGuide.hint}</p>
+      </div>
+    `
+      doc.body.appendChild(root)
+    },
+    [rawHp, filteredHp, currentGuide, selectedRaid, selectedGate]
+  )
+
+  useEffect(() => {
+    if (pipWindowRef.current) updatePipUI(pipWindowRef.current)
+  }, [rawHp, filteredHp, updatePipUI])
+
+  const openGuidePip = async () => {
+    if (!('documentPictureInPicture' in window)) return alert('PiP 미지원 브라우저입니다.')
+    try {
+      // @ts-ignore
+      const pipWindow = await window.documentPictureInPicture.requestWindow({
+        width: 340,
+        height: 180,
+      })
+      pipWindowRef.current = pipWindow
+      Array.from(document.styleSheets).forEach(styleSheet => {
+        try {
+          const newStyle = document.createElement('style')
+          const css = Array.from(styleSheet.cssRules)
+            .map(rule => rule.cssText)
+            .join('')
+          newStyle.textContent = css
+          pipWindow.document.head.appendChild(newStyle)
+        } catch (e) {}
+      })
+      updatePipUI(pipWindow)
+      pipWindow.addEventListener('pagehide', () => {
+        pipWindowRef.current = null
+      })
+    } catch (err) {
+      console.error('PiP 실패:', err)
+    }
+  }
+
+  const raidMap = useMemo(() => {
+    const map: Record<string, Record<string, string[]>> = {}
+    raids.forEach(r => {
+      map[r.name] = {}
+      r.difficulties.forEach(d => {
+        map[r.name][d.name] = d.gates
+      })
+    })
+    return map
+  }, [raids])
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0c] text-slate-200">
+      <nav className="border-b border-white/5 px-8 py-4 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
+        <div
+          className="text-xl font-black text-white cursor-pointer"
+          onClick={() => router.push('/')}
+        >
+          LOA DOCTOR
+        </div>
+      </nav>
+      <main className="max-w-7xl mx-auto px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <div className="lg:col-span-4 space-y-8">
+            <section className="bg-white/[0.03] border border-white/5 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-black/40 p-4 rounded-2xl border border-white/5">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">OCR Raw</div>
+                  <div className="text-3xl font-black text-slate-200">{rawHp}</div>
+                </div>
+                <div className="bg-blue-600/10 p-4 rounded-2xl border border-blue-500/20">
+                  <div className="text-[10px] font-bold text-blue-400 uppercase mb-1">Filtered</div>
+                  <div className="text-3xl font-black text-blue-500">{filteredHp}</div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <select
+                  value={selectedRaid}
+                  onChange={e => setSelectedRaid(e.target.value)}
+                  className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold"
+                >
+                  {raids.map(r => (
+                    <option key={r.name} value={r.name}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    value={selectedDifficulty}
+                    onChange={e => setSelectedDifficulty(e.target.value)}
+                    className="bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold"
+                  >
+                    {Object.keys(raidMap[selectedRaid] || {}).map(d => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedGate}
+                    onChange={e => setSelectedGate(e.target.value)}
+                    className="bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold"
+                  >
+                    {(raidMap[selectedRaid]?.[selectedDifficulty] || []).map(g => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mt-10 space-y-3">
+                {!isCapturing ? (
+                  <button
+                    onClick={() => {
+                      captureRef.current?.startCapture()
+                      setIsCapturing(true)
+                    }}
+                    className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black transition-all shadow-xl shadow-blue-600/20 uppercase tracking-widest text-sm"
+                  >
+                    Analyze Start
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={openGuidePip}
+                      className="w-full py-5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black transition-all uppercase tracking-widest text-sm"
+                    >
+                      Open Overlay
+                    </button>
+                    <button
+                      onClick={() => {
+                        captureRef.current?.stopCapture()
+                        setIsCapturing(false)
+                      }}
+                      className="w-full py-3 text-red-500/50 hover:text-red-500 text-xs font-bold transition-colors"
+                    >
+                      Stop Session
+                    </button>
+                  </>
+                )}
+              </div>
+            </section>
+          </div>
+          <div className="lg:col-span-8">
+            <div className="rounded-[40px] border border-white/5 bg-black/40 shadow-2xl aspect-video relative">
+              <ScreenCaptureContainer ref={captureRef} embed onLineDetected={handleLineDetected} />
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+</file>
+
+<file path="client/src/app/test/page.tsx">
+import { ScreenCaptureContainer } from '@/src/features/screen-capture/ScreenCaptureContainer'
+
+export default function Page() {
+  return <ScreenCaptureContainer />
+}
+</file>
+
+</files>

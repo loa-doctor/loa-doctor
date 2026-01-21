@@ -6,14 +6,8 @@ import {
   ScreenCaptureContainer,
   ScreenCaptureHandle,
 } from '@/src/features/screen-capture/ScreenCaptureContainer'
-
-type Raid = {
-  name: string
-  difficulties: { name: string; gates: string[] }[]
-}
-
-type PhaseGuide = { line: number; phase: string; hint: string }
-type AnalysisStatus = 'IDLE' | 'RUNNING' | 'GUIDE' | 'RETRY_RESET'
+import { useRaidAnalysis } from '@/src/features/raid/hooks/useRaidAnalysis'
+import { Raid, PhaseGuide } from '@/src/types/raid'
 
 export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   const router = useRouter()
@@ -25,18 +19,19 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   const [selectedDifficulty, setSelectedDifficulty] = useState('하드')
   const [selectedGate, setSelectedGate] = useState('3관문')
 
-  const [rawHp, setRawHp] = useState<number>(0)
-  const [filteredHp, setFilteredHp] = useState<number>(0)
-  const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('IDLE')
-  const [currentGuide, setCurrentGuide] = useState({
-    hpPhase: '준비 완료',
-    hint: '인식된 HP에 따라 가이드를 미리 표시합니다.',
-  })
-
   const [phaseGuides, setPhaseGuides] = useState<PhaseGuide[]>([])
-  const minLineReachedRef = useRef<number>(999)
-  const stabilityRef = useRef({ lastVal: 0, count: 0 })
-  const lastTriggeredLineRef = useRef<number | null>(null)
+
+  const {
+    rawHp,
+    filteredHp,
+    analysisStatus,
+    currentGuide,
+    handleLineDetected,
+    resetSession,
+    setAnalysisStatus,
+    setFilteredHp,
+    setCurrentGuide
+  } = useRaidAnalysis({ phaseGuides, selectedRaid, selectedGate })
 
   useEffect(() => {
     const gateNumber = Number(selectedGate.replace('관문', ''))
@@ -48,86 +43,45 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
         setPhaseGuides(data.sort((a: any, b: any) => b.line - a.line))
         resetSession()
       })
-  }, [selectedRaid, selectedGate, selectedDifficulty])
-
-  const resetSession = useCallback(() => {
-    lastTriggeredLineRef.current = null
-    minLineReachedRef.current = 999
-    stabilityRef.current = { lastVal: 0, count: 0 }
-    setFilteredHp(0)
-    setAnalysisStatus('RETRY_RESET')
-    setCurrentGuide({ hpPhase: '전투 시작 대기', hint: 'HP 인식을 시작합니다.' })
-  }, [])
-
-  const handleLineDetected = useCallback(
-    (currentLine: number) => {
-      //TODO: 줄수가 2940 이런식으로 튀면 그냥 RawHP가 멈춰버리는 이슈 수정해야함.
-      setRawHp(currentLine)
-      // 1. 안정화 체크
-      if (stabilityRef.current.lastVal === currentLine) {
-        stabilityRef.current.count++
-      } else {
-        stabilityRef.current.lastVal = currentLine
-        stabilityRef.current.count = 0
-      }
-
-      // 2. 리트라이 판정 (90줄 이상으로 확 튀었을 때만)
-      // 77, 88 같은 오인식은 여기서 걸러지지 않도록 '패턴' 대신 '안정성'만 봅니다.
-      if (currentLine >= phaseGuides[0].line && minLineReachedRef.current < 50) {
-        if (stabilityRef.current.count >= 3) {
-          resetSession()
-        }
-        //return
-      }
-
-      // 3. [핵심] 지능형 역행 차단
-      // 줄 수는 '내려가는 것'이 정상입니다. 올라가는 것은 무조건 의심합니다.
-      if (currentLine > minLineReachedRef.current) {
-        // (A) 한 자릿수 구간 오인식 방어 (7줄인데 77이 들어오는 경우)
-        if (
-          minLineReachedRef.current < 10 &&
-          currentLine === minLineReachedRef.current * 10 + minLineReachedRef.current
-        ) {
-          //return // 77은 무시하고 기존 7을 유지 (압축하지 않음)
-        }
-
-        // (B) 미세한 인식 오차(±2줄)는 허용하되, 그 이상은 3초 이상 안정화되어야 인정
-        if (currentLine > minLineReachedRef.current + 2) {
-          //if (stabilityRef.current.count < 10) return // 약 3초간 버텨야 역행 인정
-        }
-      }
-
-      // 4. 데이터 확정
-      if (currentLine < minLineReachedRef.current) {
-        minLineReachedRef.current = currentLine
-      }
-      setFilteredHp(currentLine)
-
-      // 5. 가이드 매칭
-      const nextPreview = phaseGuides.find(guide => currentLine > guide.line)
-      if (nextPreview && nextPreview.line !== lastTriggeredLineRef.current) {
-        lastTriggeredLineRef.current = nextPreview.line
-        setCurrentGuide({
-          hpPhase: `${nextPreview.line}줄: ${nextPreview.phase}`,
-          hint: nextPreview.hint,
-        })
-        setAnalysisStatus('GUIDE')
-      }
-    },
-    [phaseGuides, resetSession]
-  )
+  }, [selectedRaid, selectedGate, selectedDifficulty, resetSession])
 
   // PiP 업데이트
   const updatePipUI = useCallback(
     (pipWin: Window) => {
       const doc = pipWin.document
+      const hasImage = !!currentGuide.imageUrl
+      
+      // 높이 계산: 여유 있게 조정
+      // Header(40) + Text(100) + Padding(20) = 160px
+      const BASE_HEIGHT = 160 
+      const IMAGE_HEIGHT = 200
+      const targetHeight = hasImage ? BASE_HEIGHT + IMAGE_HEIGHT : BASE_HEIGHT
+      
+      // 창 크기 조절 (requestAnimationFrame으로 렌더링 시점 동기화 시도)
+      requestAnimationFrame(() => {
+        try {
+          // InnerHeight 차이만큼 resizeBy로 조절 (정확한 Viewport 크기 보장)
+          const currentHeight = pipWin.innerHeight
+          const diff = targetHeight - currentHeight
+          
+          if (Math.abs(diff) > 2) { // 2px 이상 차이날 때만 조절
+             pipWin.resizeBy(0, diff)
+          }
+        } catch (e) {
+          console.warn('PiP resize failed:', e)
+        }
+      })
+
       doc.body.innerHTML = ''
       doc.body.className =
-        'bg-[#0a0a0c] text-[#e2e8f0] font-sans overflow-hidden select-none border-l-4 border-blue-600'
+        'bg-[#0a0a0c] text-[#e2e8f0] font-sans overflow-hidden select-none border-l-4 border-blue-600 flex flex-col'
+      
       const root = doc.createElement('div')
       root.className = 'flex flex-col h-full'
+      
       root.innerHTML = `
-      <div class="flex items-center justify-between px-4 py-2 bg-[#141417] border-b border-white/5">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-4 py-2 bg-[#141417] border-b border-white/5 h-[${40}px] shrink-0">
         <div class="flex flex-col">
           <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter">RAID MONITOR</span>
           <span class="text-[12px] font-bold text-white/90">${selectedRaid} ${selectedGate}</span>
@@ -143,10 +97,23 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
           </div>
         </div>
       </div>
-      <div class="flex-1 flex flex-col justify-center px-4 py-3 bg-gradient-to-b from-transparent to-blue-900/10">
+
+      <!-- Text Content (Top) -->
+      <div class="flex flex-col justify-center px-4 py-3 bg-[#0a0a0c] shrink-0 h-[${100}px]">
         <h2 class="text-[18px] font-black text-white leading-tight mb-1">${currentGuide.hpPhase}</h2>
-        <p class="text-[12px] text-slate-400 line-clamp-2">${currentGuide.hint}</p>
+        <p class="text-[12px] text-slate-400 line-clamp-2 leading-relaxed">${currentGuide.hint}</p>
       </div>
+
+      <!-- Image Content (Bottom) -->
+      ${
+        hasImage
+          ? `
+          <div class="flex-1 bg-black relative border-t border-white/10">
+            <img src="${currentGuide.imageUrl}" class="absolute inset-0 w-full h-full object-contain" />
+          </div>
+          `
+          : ''
+      }
     `
       doc.body.appendChild(root)
     },
@@ -163,7 +130,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
       // @ts-ignore
       const pipWindow = await window.documentPictureInPicture.requestWindow({
         width: 340,
-        height: 180,
+        height: 160, // 기본 높이 (Base Height)
       })
       pipWindowRef.current = pipWindow
       Array.from(document.styleSheets).forEach(styleSheet => {

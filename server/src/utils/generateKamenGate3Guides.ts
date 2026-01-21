@@ -1,11 +1,11 @@
-export function generateGateGuides() {
+export function generateGateGuides(maxLine: number = 990) {
   const guides: {
     line: number
     phase: string
     hint: string
   }[] = []
 
-  for (let line = 990; line >= 10; line -= 10) {
+  for (let line = maxLine; line >= 10; line -= 10) {
     guides.push({
       line,
       phase: `${line}줄 기믹제목`,

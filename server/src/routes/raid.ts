@@ -4,6 +4,7 @@ import { Difficulty } from '../models/Difficulty.js'
 import { Gate } from '../models/Gate.js'
 import { PhaseGuide } from '../models/Phaseguide.js'
 import { generateGateGuides } from '../utils/generateKamenGate3Guides.js'
+import { generateKamenGate1Guides } from '../utils/generateKamenGate1Guides.js'
 
 const router = Router()
 
@@ -134,6 +135,7 @@ router.post('/admin/add-guides', async (req, res) => {
     difficulties = ['노말', '하드'],
     gates = [1, 2, 3],
     reset = true,
+    maxLine, // 추가됨
   } = req.body
 
   const bossDoc = await Boss.findOne({ name: boss })
@@ -161,7 +163,12 @@ router.post('/admin/add-guides', async (req, res) => {
         await PhaseGuide.deleteMany({ gateId: gateDoc._id })
       }
 
-      const baseGuides = generateGateGuides()
+      let baseGuides
+      if (gateNumber === 1 && boss === '카멘') {
+        baseGuides = generateKamenGate1Guides(maxLine || 300)
+      } else {
+        baseGuides = generateGateGuides(maxLine)
+      }
 
       const guides = baseGuides.map(g => ({
         gateId: gateDoc._id,
