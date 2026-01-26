@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react'
 import { Rect, Aspect } from '../utils/types'
 import { calcLargestRect, pickBestRect, lerpRect } from '../utils/rect'
 
-export function useAspectCalibration(videoRef: React.RefObject<HTMLVideoElement | null>) {
+export type CalibrationState = {
+  phase: 'IDLE' | 'SEARCHING' | 'LOCKED'
+  aspect: Aspect
+  displayRect: Rect | null
+  lockedRect: Rect | null
+  startSearch: () => void
+  reset: () => void
+}
+
+export function useAspectCalibration(videoRef: React.RefObject<HTMLVideoElement | null>): CalibrationState {
   const [phase, setPhase] = useState<'IDLE' | 'SEARCHING' | 'LOCKED'>('IDLE')
   const [aspect, setAspect] = useState<Aspect>('UNKNOWN')
   const [displayRect, setDisplayRect] = useState<Rect | null>(null)
