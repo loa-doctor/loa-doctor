@@ -3,22 +3,23 @@ import { Rect, Aspect } from '../utils/types'
 import { calcLargestRect, pickBestRect, lerpRect } from '../utils/rect'
 
 export type CalibrationState = {
-  phase: 'IDLE' | 'SEARCHING' | 'LOCKED'
+  phase: 'IDLE' | 'SETTING' | 'SEARCHING' | 'LOCKED'
   aspect: Aspect
   displayRect: Rect | null
   lockedRect: Rect | null
-  startSearch: () => void
+  startSetting: () => void
   reset: () => void
+  lock: () => void
 }
 
 export function useAspectCalibration(videoRef: React.RefObject<HTMLVideoElement | null>): CalibrationState {
-  const [phase, setPhase] = useState<'IDLE' | 'SEARCHING' | 'LOCKED'>('IDLE')
+  const [phase, setPhase] = useState<'IDLE' | 'SETTING' | 'SEARCHING' | 'LOCKED'>('IDLE')
   const [aspect, setAspect] = useState<Aspect>('UNKNOWN')
   const [displayRect, setDisplayRect] = useState<Rect | null>(null)
   const [lockedRect, setLockedRect] = useState<Rect | null>(null)
 
   useEffect(() => {
-    if (phase !== 'SEARCHING') return
+    if (phase !== 'SETTING') return
     const video = videoRef.current
     if (!video) return
 
@@ -55,7 +56,7 @@ export function useAspectCalibration(videoRef: React.RefObject<HTMLVideoElement 
       } else {
         setLockedRect(best)
         setDisplayRect(best)
-        setPhase('LOCKED')
+        setPhase('SEARCHING')
         return
       }
 
@@ -71,12 +72,13 @@ export function useAspectCalibration(videoRef: React.RefObject<HTMLVideoElement 
     aspect,
     displayRect,
     lockedRect,
-    startSearch: () => setPhase('SEARCHING'),
+    startSetting: () => setPhase('SETTING'),
     reset: () => {
       setPhase('IDLE')
       setAspect('UNKNOWN')
       setDisplayRect(null)
       setLockedRect(null)
     },
+    lock: () => setPhase('LOCKED'),
   }
 }

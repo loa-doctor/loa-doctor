@@ -165,14 +165,6 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-slate-200">
-      <nav className="border-b border-white/5 px-8 py-4 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
-        <div
-          className="text-xl font-black text-white cursor-pointer"
-          onClick={() => router.push('/')}
-        >
-          LOA DOCTOR
-        </div>
-      </nav>
       <main className="max-w-7xl mx-auto px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-4 space-y-8">

@@ -11,7 +11,7 @@ type Props = {
   videoRef: React.RefObject<HTMLVideoElement | null>
   ocrPreviewCanvasRef: React.RefObject<HTMLCanvasElement | null>
 
-  phase: 'IDLE' | 'SEARCHING' | 'LOCKED'
+  phase: 'IDLE' | 'SETTING' | 'SEARCHING' | 'LOCKED'
   aspect: Aspect
   displayRect: Rect | null
   lockedRect: Rect | null

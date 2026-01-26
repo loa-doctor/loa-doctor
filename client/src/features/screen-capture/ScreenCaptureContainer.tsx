@@ -8,6 +8,7 @@ import { useTesseractOCR } from './hooks/useTesseractOCR'
 import { type RectTuning } from './utils/rect'
 import { STORAGE_KEYS } from './utils/storageKeys'
 import { useOCRLoop } from './hooks/useOCRLoop'
+import { useBossLineSearching } from './hooks/useBossLineSearching'
 
 export type ScreenCaptureHandle = {
   startCapture: () => void
@@ -32,7 +33,7 @@ export const ScreenCaptureContainer = forwardRef<
   useImperativeHandle(ref, () => ({
     startCapture() {
       start()
-      calibration.startSearch()
+      calibration.startSetting()
     },
     stopCapture() {
       stop()
@@ -53,41 +54,55 @@ export const ScreenCaptureContainer = forwardRef<
     threshold: 50,
   }
 
-  const [tuning, setTuning] = useState<RectTuning>(() => {
-    if (typeof window === 'undefined') return DEFAULT_TUNING
+const [userTuning, setUserTuning] = useState<RectTuning>(() => {
+  if (typeof window === 'undefined') return DEFAULT_TUNING
 
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.TUNING)
-      if (!saved) return DEFAULT_TUNING
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.TUNING)
+    if (!saved) return DEFAULT_TUNING
 
-      return {
-        ...DEFAULT_TUNING,
-        ...JSON.parse(saved),
-      }
-    } catch {
-      return DEFAULT_TUNING
+    return {
+      ...DEFAULT_TUNING,
+      ...JSON.parse(saved),
     }
-  })
-
-  const handleTuningChange = (v: Partial<RectTuning>) => {
-    setTuning(prev => ({ ...prev, ...v }))
+  } catch {
+    return DEFAULT_TUNING
   }
+})
 
+// OCR / Preview에서 실제로 쓰는 tuning
+const runtimeTuning: RectTuning =
+  calibration.phase === 'LOCKED'
+    ? userTuning        // 분석 중엔 사용자 튜닝
+    : DEFAULT_TUNING    // SETTING / SEARCHING은 항상 기본값
+
+
+const handleTuningChange = (v: Partial<RectTuning>) => {
+  setUserTuning(prev => ({ ...prev, ...v }))
+}
+
+  // ===== Boss Line Searching (SEARCHING 전용) =====
+  useBossLineSearching({
+    videoRef,
+    canvasRef: ocrPreviewCanvasRef,
+    rect: calibration.lockedRect,
+    enabled: calibration.phase === 'SEARCHING',
+    recognize,
+    onDetected: line => {
+      calibration.lock()          // SEARCHING → LOCKED
+      onLineDetected?.(line)      // 외부 전달
+    },
+  })
   // ===== OCR Loop =====
   useOCRLoop({
     videoRef,
     canvasRef: ocrPreviewCanvasRef,
     calibration,
-    tuning,
+    tuning: runtimeTuning,
     recognize,
     onLineDetected,
   })
 
-  // ===== OCR ROI =====
-  const effectiveTuning =
-    calibration.phase === 'LOCKED'
-      ? tuning
-      : DEFAULT_TUNING
 
   return (
     <ScreenCaptureView
@@ -96,8 +111,8 @@ export const ScreenCaptureContainer = forwardRef<
       {...calibration}
       debugOn={debugOn}
       onToggleDebug={() => setDebugOn(v => !v)}
-      tuning={effectiveTuning}
-      rawTuning={tuning}
+      tuning={runtimeTuning}
+      rawTuning={userTuning}
       onTuningChange={handleTuningChange}
       lineText={lineText}
     />
