@@ -8,7 +8,7 @@ type Props = {
   videoRef: React.RefObject<HTMLVideoElement | null>
   rect: Rect | null
   tuning: RectTuning
-  phase: 'IDLE' | 'SEARCHING' | 'LOCKED'
+  phase: 'IDLE' | 'SETTING' | 'SEARCHING' | 'LOCKED'
   aspect: Aspect
 }
 
