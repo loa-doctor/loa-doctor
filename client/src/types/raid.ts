@@ -1,6 +1,6 @@
 export type Raid = {
   name: string
-  difficulties: { name: string; gates: string[] }[]
+  difficulties: { name: string; gates: { name: string; maxLines: number }[] }[]
 }
 
 export type PhaseGuide = { line: number; phase: string; hint: string }

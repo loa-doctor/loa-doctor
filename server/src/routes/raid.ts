@@ -27,7 +27,10 @@ router.get('/', async (_, res) => {
 
       diffWithGates.push({
         name: diff.name,
-        gates: gates.map(g => g.name),
+        gates: gates.map(g => ({
+          name: g.name,
+          maxLines: g.maxLines || 0,
+        })),
       })
     }
 
@@ -74,9 +77,64 @@ router.get('/guides', async (req, res) => {
 })
 
 /* ============================
- * POST /api/raids/admin/reset
- * ⚠️ 개발용 전체 초기화
+ * POST /api/raids/admin/guide
+ * 가이드 생성 (단일)
  * ============================ */
+router.post('/admin/guide', async (req, res) => {
+  const { boss, difficulty, gate, line, phase, hint, imageUrl } = req.body
+
+  const bossDoc = await Boss.findOne({ name: boss })
+  if (!bossDoc) return res.status(404).json({ message: 'Boss Not Found' })
+
+  const diffDoc = await Difficulty.findOne({ bossId: bossDoc._id, name: difficulty })
+  if (!diffDoc) return res.status(404).json({ message: 'Difficulty Not Found' })
+
+  const gateDoc = await Gate.findOne({ difficultyId: diffDoc._id, gateNumber: Number(gate) })
+  if (!gateDoc) return res.status(404).json({ message: 'Gate Not Found' })
+
+  const newGuide = await PhaseGuide.create({
+    gateId: gateDoc._id,
+    line: Number(line),
+    phase,
+    hint,
+    imageUrl,
+  })
+
+  res.json(newGuide)
+})
+
+/* ============================
+ * PUT /api/raids/admin/guide/:id
+ * 가이드 수정
+ * ============================ */
+router.put('/admin/guide/:id', async (req, res) => {
+  const { id } = req.params
+  const { line, phase, hint, imageUrl } = req.body
+
+  const updated = await PhaseGuide.findByIdAndUpdate(
+    id,
+    { line: Number(line), phase, hint, imageUrl },
+    { new: true }
+  )
+
+  if (!updated) return res.status(404).json({ message: 'Guide Not Found' })
+  res.json(updated)
+})
+
+/* ============================
+ * DELETE /api/raids/admin/guide/:id
+ * 가이드 삭제
+ * ============================ */
+router.delete('/admin/guide/:id', async (req, res) => {
+  const { id } = req.params
+  await PhaseGuide.findByIdAndDelete(id)
+  res.json({ ok: true })
+})
+
+/* ============================
+ * POST /api/raids/admin/reset 
+ * ... existing reset logic ...
+ */
 router.post('/admin/reset', async (_, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({ message: 'Not allowed in production' })

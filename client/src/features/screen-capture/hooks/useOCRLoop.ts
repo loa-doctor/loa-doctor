@@ -7,8 +7,8 @@ type UseOCRLoopProps = {
   canvasRef: RefObject<HTMLCanvasElement | null>
   calibration: CalibrationState
   tuning: RectTuning
-  recognize: (canvas: HTMLCanvasElement, callback?: (line: number) => void) => Promise<void>
-  onLineDetected?: (line: number) => void
+  recognize: (canvas: HTMLCanvasElement, callback?: (line: number, confidence: number) => void) => Promise<void>
+  onLineDetected?: (line: number, confidence: number) => void
   roi?: { x: number; y: number; w: number; h: number }
   interval?: number
 }
@@ -92,8 +92,8 @@ export const useOCRLoop = ({
     if (!canvas) return
 
     const id = window.setInterval(() => {
-      recognize(canvas, line => {
-        onLineDetected?.(line)
+      recognize(canvas, (line, confidence) => {
+        onLineDetected?.(line, confidence)
       })
       drawOCRPreview()
     }, interval)

@@ -19,7 +19,7 @@ export const ScreenCaptureContainer = forwardRef<
   ScreenCaptureHandle,
   {
     embed?: boolean
-    onLineDetected?: (line: number) => void
+    onLineDetected?: (line: number, confidence?: number) => void
   }
 >(function ScreenCaptureContainer({ embed = false, onLineDetected }, ref) {
   const videoRef = useRef<HTMLVideoElement>(null)

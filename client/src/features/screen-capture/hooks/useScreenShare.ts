@@ -3,7 +3,13 @@ import type { RefObject } from 'react'
 export function useScreenShare(videoRef: RefObject<HTMLVideoElement | null>) {
   const start = async () => {
     const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: { frameRate: 15 },
+      video: { 
+        frameRate: 15,
+        // @ts-ignore
+        displaySurface: 'window', 
+        // @ts-ignore
+        monitorTypeSurfaces: 'exclude'
+      },
       audio: false,
     })
 

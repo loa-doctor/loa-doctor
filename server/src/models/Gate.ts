@@ -16,6 +16,10 @@ const GateSchema = new Schema(
       type: String,
       required: true, // "1관문"
     },
+    maxLines: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 )
