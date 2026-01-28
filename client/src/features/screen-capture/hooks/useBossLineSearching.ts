@@ -6,7 +6,7 @@ type UseBossLineSearchingProps = {
   canvasRef: RefObject<HTMLCanvasElement | null>
   rect: Rect | null
   enabled: boolean
-  recognize: (canvas: HTMLCanvasElement, callback?: (line: number) => void) => Promise<void>
+  recognize: (canvas: HTMLCanvasElement, callback?: (line: number | null, confidence: number) => void) => Promise<void>
   onDetected: (line: number) => void
   interval?: number
 }

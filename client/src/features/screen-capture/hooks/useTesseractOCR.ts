@@ -9,7 +9,7 @@ export const useTesseractOCR = () => {
   const processingRef = useRef(false)
 
   const recognize = useCallback(
-    async (canvas: HTMLCanvasElement, onLineDetected?: (line: number, confidence: number) => void) => {
+    async (canvas: HTMLCanvasElement, onLineDetected?: (line: number | null, confidence: number) => void) => {
       if (processingRef.current) return
       processingRef.current = true
       setIsLoading(true)
@@ -24,6 +24,8 @@ export const useTesseractOCR = () => {
         if (!isNaN(n)) {
           onLineDetected?.(n, result.data.confidence)
           lastValueRef.current = n
+        } else {
+          onLineDetected?.(null, result.data.confidence)
         }
       } catch (err) {
         console.error('OCR Error:', err)

@@ -10,7 +10,7 @@ interface UseRaidAnalysisProps {
 }
 
 export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLines }: UseRaidAnalysisProps) => {
-  const [rawHp, setRawHp] = useState<number>(0)
+  const [rawHp, setRawHp] = useState<number | null>(null)
   const [filteredHp, setFilteredHp] = useState<number>(0)
   const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('IDLE')
   /* New State Structure */
@@ -42,9 +42,12 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
   }, [])
 
   const handleLineDetected = useCallback(
-    (currentLine: number, confidence?: number) => {
-      // 0. 신뢰도 필터링 (60% 이하 무시)
-      if (confidence !== undefined && confidence <= 60) {
+    (currentLine: number | null, confidence?: number) => {
+      // 1. Raw 값 즉시 반영 (신뢰도 상관없이 표시)
+      setRawHp(currentLine)
+
+      // 0. 신뢰도 필터링 (60% 이하 무시) - 로직 수행 X
+      if (currentLine === null || (confidence !== undefined && confidence <= 60)) {
           return
       }
 
@@ -62,8 +65,7 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
           }
       }
 
-      // 1. Raw 값 즉시 반영
-      setRawHp(currentLine)
+
 
       // phaseGuides가 없더라도 maxLines가 있으면 로직 수행 가능하도록 수정
       if (phaseGuides.length === 0 && !maxLines) return

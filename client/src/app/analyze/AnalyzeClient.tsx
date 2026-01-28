@@ -98,11 +98,13 @@ const OverlayContent = ({
                 <span className="text-[13px] font-bold text-white/90">{selectedRaid} {selectedGate}</span>
               </div>
               <div className="flex gap-4">
-                <div className="flex flex-col items-end opacity-40">
+                <div className="flex flex-col items-end">
                   <span className="text-[8px] font-bold">RAW</span>
                   <div className="flex items-center gap-1">
-                      <span className="text-[11px] font-black">{rawHp}</span>
-                      <span className="text-[9px] font-normal text-blue-300">{ocrConfidence ? `(${Math.round(ocrConfidence)}%)` : ''}</span>
+                      <span className={`text-[11px] font-black ${rawHp === null ? 'text-red-500/50 text-[9px]' : ''}`}>
+                          {rawHp !== null ? rawHp : 'UNIDENTIFIED'}
+                      </span>
+                      <span className="text-[9px] font-normal text-blue-300">{ocrConfidence && rawHp !== null ? `(${Math.round(ocrConfidence)}%)` : ''}</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-end pl-3 border-l border-white/10">
@@ -198,7 +200,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
     setFilteredHp,
   } = useRaidAnalysis({ phaseGuides, selectedRaid, selectedGate, maxLines: selectedMaxLines })
 
-  const handleLineDetected = useCallback((line: number, confidence?: number) => {
+  const handleLineDetected = useCallback((line: number | null, confidence?: number) => {
       onLineDetectedOriginal(line, confidence)
       if (confidence !== undefined) setOcrConfidence(confidence)
   }, [onLineDetectedOriginal])
