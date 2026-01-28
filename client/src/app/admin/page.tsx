@@ -127,10 +127,13 @@ export default function AdminPage() {
 
   // ... (previous code)
 
+  /* RAID STRUCTURE STATE */
+  const [raidStructure, setRaidStructure] = useState<any[]>([])
+
   /* GUIDE CRUD STATE */
-  const [guideBoss, setGuideBoss] = useState('카멘')
-  const [guideDiff, setGuideDiff] = useState('하드')
-  const [guideGate, setGuideGate] = useState('3관문')
+  const [guideBoss, setGuideBoss] = useState('')
+  const [guideDiff, setGuideDiff] = useState('')
+  const [guideGate, setGuideGate] = useState('')
   const [guideList, setGuideList] = useState<any[]>([])
   
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -141,10 +144,86 @@ export default function AdminPage() {
      imageUrl: ''
   })
 
+  // 1. 초기 레이드 구조 Fetch
+  useEffect(() => {
+    const fetchRaidStructure = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids`)
+            const data = await res.json()
+            setRaidStructure(data)
+            
+            // 초기값 설정 (첫번째 레이드 자동 선택)
+            if (data.length > 0) {
+                const firstBoss = data[0]
+                setGuideBoss(firstBoss.name)
+                
+                if (firstBoss.difficulties.length > 0) {
+                    const firstDiff = firstBoss.difficulties[0]
+                    setGuideDiff(firstDiff.name)
+                    
+                    if (firstDiff.gates.length > 0) {
+                        setGuideGate(`${firstDiff.gates[0].name}관문`.replace('관문관문', '관문')) // 이름 보정
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to fetch raid structure', e)
+        }
+    }
+    fetchRaidStructure()
+  }, [])
+
+  // 2. Cascading Logic
+  
+  // Boss 변경 시 -> Difficulty/Gate 초기화
+  const handleBossChange = (bossName: string) => {
+      setGuideBoss(bossName)
+      const boss = raidStructure.find(r => r.name === bossName)
+      if (boss && boss.difficulties.length > 0) {
+          const firstDiff = boss.difficulties[0]
+          setGuideDiff(firstDiff.name)
+          if (firstDiff.gates.length > 0) {
+              setGuideGate(firstDiff.gates[0].name)
+          } else {
+              setGuideGate('')
+          }
+      } else {
+          setGuideDiff('')
+          setGuideGate('')
+      }
+  }
+
+  // Difficulty 변경 시 -> Gate 초기화
+  const handleDiffChange = (diffName: string) => {
+      setGuideDiff(diffName)
+      const boss = raidStructure.find(r => r.name === guideBoss)
+      const diff = boss?.difficulties.find((d: any) => d.name === diffName)
+      if (diff && diff.gates.length > 0) {
+          setGuideGate(diff.gates[0].name)
+      } else {
+          setGuideGate('')
+      }
+  }
+
+  // Helper to get lists for dropdowns
+  const getDifficulties = () => {
+      const boss = raidStructure.find(r => r.name === guideBoss)
+      return boss?.difficulties || []
+  }
+
+  const getGates = () => {
+      const boss = raidStructure.find(r => r.name === guideBoss)
+      const diff = boss?.difficulties.find((d: any) => d.name === guideDiff)
+      return diff?.gates || []
+  }
+
+
   // Guide Fetching
   const fetchGuides = async () => {
+    if (!guideBoss || !guideDiff || !guideGate) return
+
     try {
-        const gateNum = guideGate.replace('관문', '')
+        const gateNum = guideGate.replace(/관문/g, '') // "1관문" -> "1"
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/guides?boss=${guideBoss}&difficulty=${guideDiff}&gate=${gateNum}`)
         const data = await res.json()
         setGuideList(data)
@@ -159,7 +238,7 @@ export default function AdminPage() {
 
   const handleSaveGuide = async () => {
       try {
-          const gateNum = guideGate.replace('관문', '')
+          const gateNum = guideGate.replace(/관문/g, '')
           
           let url = `${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/guide`
           let method = 'POST'
@@ -317,9 +396,35 @@ export default function AdminPage() {
                         <div className="space-y-4">
                            {/* Filters (Selects) */}
                            <div className="grid grid-cols-3 gap-2">
-                               <input value={guideBoss} onChange={e=>setGuideBoss(e.target.value)} className="bg-black/40 border border-white/10 rounded px-3 py-2 text-xs" placeholder="카멘" />
-                               <input value={guideDiff} onChange={e=>setGuideDiff(e.target.value)} className="bg-black/40 border border-white/10 rounded px-3 py-2 text-xs" placeholder="하드" />
-                               <input value={guideGate} onChange={e=>setGuideGate(e.target.value)} className="bg-black/40 border border-white/10 rounded px-3 py-2 text-xs" placeholder="3관문" />
+                               <select 
+                                   value={guideBoss} 
+                                   onChange={e=>handleBossChange(e.target.value)} 
+                                   className="bg-black/40 border border-white/10 rounded px-3 py-2 text-xs"
+                               >
+                                   {raidStructure.map(r => (
+                                       <option key={r.name} value={r.name}>{r.name}</option>
+                                   ))}
+                               </select>
+
+                               <select 
+                                   value={guideDiff} 
+                                   onChange={e=>handleDiffChange(e.target.value)} 
+                                   className="bg-black/40 border border-white/10 rounded px-3 py-2 text-xs"
+                               >
+                                   {getDifficulties().map((d: any) => (
+                                       <option key={d.name} value={d.name}>{d.name}</option>
+                                   ))}
+                               </select>
+
+                               <select 
+                                   value={guideGate} 
+                                   onChange={e=>setGuideGate(e.target.value)} 
+                                   className="bg-black/40 border border-white/10 rounded px-3 py-2 text-xs"
+                               >
+                                   {getGates().map((g: any) => (
+                                       <option key={g.name} value={g.name}>{g.name}</option>
+                                   ))}
+                               </select>
                            </div>
                            
                            <div className="space-y-2">
@@ -373,8 +478,13 @@ export default function AdminPage() {
                 {/* Right: List */}
                 <div className="flex-1 rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-white/10 bg-black/20 flex justify-between items-center">
-                        <h3 className="font-bold text-sm">등록된 가이드 목록 ({guideList.length})</h3>
-                        <button onClick={fetchGuides} className="text-xs text-blue-400 hover:text-blue-300">새로고침</button>
+                        <h3 className="font-bold text-sm">등록된 가이드</h3>
+                        <div className="flex items-center gap-2">
+                             <div className="text-[10px] text-slate-500 bg-white/5 px-2 py-1 rounded">
+                                 {guideBoss} &gt; {guideDiff} &gt; {guideGate}
+                             </div>
+                             <button onClick={fetchGuides} className="text-xs text-blue-400 hover:text-blue-300">새로고침</button>
+                        </div>
                     </div>
                     <div className="flex-1 overflow-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-white/10">
                         {guideList.map((guide) => (

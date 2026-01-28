@@ -10,6 +10,9 @@ import {
 import { useRaidAnalysis } from '@/src/features/raid/hooks/useRaidAnalysis'
 import { Raid, PhaseGuide } from '@/src/types/raid'
 
+
+
+
 const OverlayContent = ({ 
     window: targetWindow, 
     activeGuide, 
@@ -19,19 +22,52 @@ const OverlayContent = ({
     filteredHp, 
     selectedRaid, 
     selectedGate,
-    ocrConfidence
+    ocrConfidence,
+    onNextGate,
+    onChangeSelection,
+    raids,
+    raidMap,
+    maxLines,
+    analysisMode, // 'IDLE' | 'RUNNING' | 'PAUSED'
+    onStart,
+    onPause,
+    onStop
 }: any) => {
     const rootRef = useRef<HTMLDivElement>(null)
+    const [isSelectionMode, setIsSelectionMode] = useState(false)
+    
+    // Local state for selection mode
+    const [tempRaid, setTempRaid] = useState(selectedRaid)
+    const [tempDiff, setTempDiff] = useState('')
+    const [tempGate, setTempGate] = useState(selectedGate)
 
-    // Body Style override
+    // HP Percentage Calculation
+    const hpPercent = useMemo(() => {
+        if (!maxLines || !filteredHp) return 0
+        const hp = Number(filteredHp)
+        if (isNaN(hp)) return 0
+        // Clamp between 0 and 100
+        return Math.min(Math.max((hp / maxLines) * 100, 0), 100)
+    }, [filteredHp, maxLines])
+
+    // Init temp state when opening selection mode
+    useEffect(() => {
+        if (isSelectionMode) {
+            setTempRaid(selectedRaid)
+            // find current diff from raids
+            const r = raids.find((r: any) => r.name === selectedRaid)
+            const d = r?.difficulties.find((d: any) => d.gates.some((g: any) => g.name === selectedGate))
+            setTempDiff(d?.name || '노말')
+            setTempGate(selectedGate)
+        }
+    }, [isSelectionMode, selectedRaid, selectedGate, raids])
+
+    // Body Style override (Keep existing)
     useEffect(() => {
         if (!targetWindow) return
-        // Default to hidden, but if resize fails we might need auto.
-        // We will try hidden first to satisfy "no scrollbar" request.
         targetWindow.document.body.style.overflow = 'hidden' 
         targetWindow.document.body.style.margin = '0'
         
-        // Add scrollbar hiding styles just in case we need to enable overflow
         const style = targetWindow.document.createElement('style')
         style.textContent = `
             body::-webkit-scrollbar { display: none; }
@@ -44,29 +80,26 @@ const OverlayContent = ({
         if (!rootRef.current || !targetWindow) return
         
         const adjustSize = () => {
-            if (!rootRef.current || targetWindow.closed) return
+             // ... existing resize logic
+             if (!rootRef.current || targetWindow.closed) return
             
-            const contentHeight = rootRef.current.scrollHeight
-            const currentHeight = targetWindow.innerHeight
+             const contentHeight = rootRef.current.scrollHeight
+             const currentHeight = targetWindow.innerHeight
             
-            if (Math.abs(contentHeight - currentHeight) > 1) {
-                const diff = contentHeight - currentHeight
-                try {
-                    // Best effort resize. If blocked by browser, we accept current size.
-                    targetWindow.resizeBy(0, diff)
-                } catch (e) {
-                    // Do NOT enable scrollbars even if resize fails, per user preference.
-                    // The user will see truncated content but no scrollbars.
-                    // We set initial size larger to mitigate this.
-                }
-            }
+             if (Math.abs(contentHeight - currentHeight) > 1) {
+                 const diff = contentHeight - currentHeight
+                 try {
+                     targetWindow.resizeBy(0, diff)
+                 } catch (e) {}
+             }
         }
 
         adjustSize()
         const observer = new ResizeObserver(adjustSize)
         observer.observe(rootRef.current)
         return () => observer.disconnect()
-    }, [targetWindow, activeGuide, upcomingGuide, mainGuide]) 
+    }, [targetWindow, isSelectionMode, activeGuide, upcomingGuide]) 
+
 
     // Helper Render
     const GuideBlock = ({ guide, type }: { guide: any, type: 'ACTIVE' | 'NEXT' }) => {
@@ -89,14 +122,20 @@ const OverlayContent = ({
         )
     }
 
+    const handleConfirmSelection = () => {
+        onChangeSelection(tempRaid, tempDiff, tempGate)
+        setIsSelectionMode(false)
+    }
+
     return (
-        <div ref={rootRef} className="flex flex-col w-full h-screen bg-[#0a0a0c] text-[#e2e8f0] font-sans select-none border-l-4 border-blue-600 overflow-hidden box-border">
+        <div ref={rootRef} className="flex flex-col w-full h-screen bg-[#0a0a0c] text-[#e2e8f0] font-sans select-none overflow-hidden box-border">
            {/* Header */}
-           <div className="flex items-center justify-between px-5 py-3 bg-[#141417] border-b border-white/5 h-[48px] shrink-0 box-border">
+           <div className="flex items-center justify-between px-5 py-3 bg-[#141417] border-b border-white/5 h-[48px] shrink-0 box-border relative z-20">
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">RAID MONITOR</span>
                 <span className="text-[13px] font-bold text-white/90">{selectedRaid} {selectedGate}</span>
               </div>
+              
               <div className="flex gap-4">
                 <div className="flex flex-col items-end">
                   <span className="text-[8px] font-bold">RAW</span>
@@ -114,24 +153,119 @@ const OverlayContent = ({
               </div>
            </div>
 
-           {/* Guides */}
-           {(activeGuide || upcomingGuide) && (
-               <div className="flex flex-col flex-1 p-4 gap-3 shrink-0 box-border overflow-hidden">
-                   <GuideBlock guide={activeGuide} type="ACTIVE" />
-                   <GuideBlock guide={upcomingGuide} type="NEXT" />
+           {/* Visual HP Bar */}
+           <div className="w-full h-3 bg-white/5 relative shrink-0">
+               <div 
+                   className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                   style={{ width: `${hpPercent}%` }}
+               />
+           </div>
+
+           {/* Selection Mode UI */}
+           {isSelectionMode && (
+               <div className="p-4 bg-[#0a0a0c]/95 backdrop-blur absolute bottom-[50px] left-0 right-0 border-t border-white/10 space-y-3 z-10 transition-all">
+                   <div className="grid grid-cols-3 gap-2">
+                       <select 
+                           value={tempRaid} 
+                           onChange={e => {
+                               setTempRaid(e.target.value)
+                               const r = raids.find((x:any) => x.name === e.target.value)
+                               if(r && r.difficulties.length > 0) {
+                                   setTempDiff(r.difficulties[0].name)
+                                   if(r.difficulties[0].gates.length > 0) {
+                                       setTempGate(r.difficulties[0].gates[0].name)
+                                   }
+                               }
+                           }}
+                           className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
+                       >
+                           {raids.map((r: any) => <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">{r.name}</option>)}
+                       </select>
+                       <select 
+                           value={tempDiff} 
+                           onChange={e => {
+                               setTempDiff(e.target.value)
+                               const r = raids.find((x:any) => x.name === tempRaid)
+                               const d = r?.difficulties.find((x:any) => x.name === e.target.value)
+                               if(d && d.gates.length > 0) setTempGate(d.gates[0].name)
+                           }}
+                           className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
+                       >
+                           {Object.keys(raidMap[tempRaid] || {}).map(d => <option key={d} value={d} className="bg-[#141417] text-[#e2e8f0]">{d}</option>)}
+                       </select>
+                       <select 
+                           value={tempGate} 
+                           onChange={e => setTempGate(e.target.value)}
+                           className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
+                       >
+                           {(raidMap[tempRaid]?.[tempDiff] || []).map((g:string) => <option key={g} value={g} className="bg-[#141417] text-[#e2e8f0]">{g}</option>)}
+                       </select>
+                   </div>
+                   <button 
+                       onClick={handleConfirmSelection}
+                       className="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold text-white transition-colors"
+                   >
+                       변경 적용
+                   </button>
                </div>
            )}
 
-           {/* Image (Optional, hidden if not enough space or no image) */}
-           {/* Only show image if we have plenty of space, or maybe just tiny thumbnail? 
-               User asked for layout adjustment. Fixed 300px is small for image + text.
-               We'll hide image for now to prioritize text readability in fixed mode as per "contents are cut" feedback previously.
-           */}
-           {false && mainGuide?.imageUrl && (
-               <div className="bg-black relative border-t border-white/10 h-[100px] shrink-0 box-border">
-                  <img src={mainGuide.imageUrl} className="absolute inset-0 w-full h-full object-contain" />
+           {/* Guides: Fill the remaining space */}
+           <div className="flex flex-col flex-1 p-4 gap-3 shrink-0 box-border overflow-hidden pb-[60px]">
+               {activeGuide && <GuideBlock guide={activeGuide} type="ACTIVE" />}
+               {upcomingGuide && <GuideBlock guide={upcomingGuide} type="NEXT" />}
+           </div>
+
+           {/* Fixed Footer */}
+           <div className="absolute bottom-0 left-0 right-0 h-[50px] bg-[#141417] border-t border-white/5 flex items-center justify-between px-4 z-20">
+               <button 
+                   onClick={() => setIsSelectionMode(!isSelectionMode)}
+                   className={`px-3 py-1.5 rounded transition-all flex items-center gap-2 text-xs font-bold ${isSelectionMode ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
+               >
+                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                   </svg>
+                   {isSelectionMode ? '닫기' : '설정'}
+               </button>
+
+               {/* Control Buttons */}
+               <div className="flex items-center gap-2">
+                   {analysisMode !== 'RUNNING' && (
+                       <button onClick={onStart} className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 text-green-500 transition-colors">
+                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                           </svg>
+                       </button>
+                   )}
+                   {analysisMode === 'RUNNING' && (
+                       <button onClick={onPause} className="p-1.5 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 transition-colors">
+                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                           </svg>
+                       </button>
+                   )}
+                   <button onClick={onStop} className="p-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors">
+                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                       </svg>
+                   </button>
                </div>
-           )}
+
+               {onNextGate && (
+                   <button 
+                       onClick={onNextGate}
+                       className="px-4 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 border border-blue-500/30 rounded text-xs font-bold transition-all flex items-center gap-1"
+                   >
+                       다음 관문
+                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                       </svg>
+                   </button>
+               )}
+           </div>
         </div>
     )
 }
@@ -143,6 +277,9 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
 
   /* Persistence Logic */
   const [isCapturing, setIsCapturing] = useState(false)
+  
+  // Analysis Mode State
+  const [analysisMode, setAnalysisMode] = useState<'IDLE' | 'RUNNING' | 'PAUSED'>('IDLE')
 
   // Initialization fixed to prevent Hydration Error
   const [selectedRaid, setSelectedRaid] = useState(raids.length > 0 ? raids[0].name : '카멘')
@@ -201,9 +338,12 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   } = useRaidAnalysis({ phaseGuides, selectedRaid, selectedGate, maxLines: selectedMaxLines })
 
   const handleLineDetected = useCallback((line: number | null, confidence?: number) => {
+      // Logic Control
+      if (analysisMode !== 'RUNNING') return
+
       onLineDetectedOriginal(line, confidence)
       if (confidence !== undefined) setOcrConfidence(confidence)
-  }, [onLineDetectedOriginal])
+  }, [onLineDetectedOriginal, analysisMode])
 
   useEffect(() => {
     const gateNumber = Number(selectedGate.replace('관문', ''))
@@ -217,6 +357,15 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
       })
   }, [selectedRaid, selectedGate, selectedDifficulty, resetSession])
   
+  /* Control Handlers */
+  const handleStart = () => setAnalysisMode('RUNNING')
+  const handlePause = () => setAnalysisMode('PAUSED')
+  const handleStop = () => {
+      setAnalysisMode('IDLE')
+      resetSession()
+      setOcrConfidence(undefined)
+  }
+
   /* PiP Window State */
   const [pipWindow, setPipWindow] = useState<Window | null>(null)
 
@@ -224,7 +373,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
     if (!('documentPictureInPicture' in window)) return alert('PiP 미지원 브라우저입니다.')
     try {
       const width = 340
-      const height = 300
+      const height = 380
       
       // @ts-ignore
       const win = await window.documentPictureInPicture.requestWindow({
@@ -292,6 +441,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
     }
   }, [selectedRaid, selectedDifficulty, selectedGate, raids])
 
+
   const raidMap = useMemo(() => {
     const map: Record<string, Record<string, string[]>> = {}
     raids.forEach(r => {
@@ -304,6 +454,36 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   }, [raids])
 
   const mainGuide = activeGuide || upcomingGuide
+
+  // Next Gate Logic
+  const handleNextGate = () => {
+    const r = raids.find(r => r.name === selectedRaid)
+    const d = r?.difficulties.find(d => d.name === selectedDifficulty)
+    if (!d) return
+
+    const currentGateIndex = d.gates.findIndex(g => g.name === selectedGate)
+    if (currentGateIndex !== -1 && currentGateIndex < d.gates.length - 1) {
+        const nextGate = d.gates[currentGateIndex + 1]
+        setSelectedGate(nextGate.name)
+    }
+  }
+  
+  // Selection Logic
+  const handleSelectionFromOverlay = (raid: string, diff: string, gate: string) => {
+      setSelectedRaid(raid)
+      setSelectedDifficulty(diff)
+      setSelectedGate(gate)
+  }
+
+  // Determine if next gate exists
+  const hasNextGate = useMemo(() => {
+      const r = raids.find(r => r.name === selectedRaid)
+      const d = r?.difficulties.find(d => d.name === selectedDifficulty)
+      if (!d) return false
+      const idx = d.gates.findIndex(g => g.name === selectedGate)
+      return idx !== -1 && idx < d.gates.length - 1
+  }, [raids, selectedRaid, selectedDifficulty, selectedGate])
+
 
   return (
     <>
@@ -329,7 +509,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                   className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold"
                 >
                   {raids.map(r => (
-                    <option key={r.name} value={r.name}>
+                    <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">
                       {r.name}
                     </option>
                   ))}
@@ -341,7 +521,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                     className="bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold"
                   >
                     {Object.keys(raidMap[selectedRaid] || {}).map(d => (
-                      <option key={d} value={d}>
+                      <option key={d} value={d} className="bg-[#141417] text-[#e2e8f0]">
                         {d}
                       </option>
                     ))}
@@ -352,7 +532,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                     className="bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold"
                   >
                     {(raidMap[selectedRaid]?.[selectedDifficulty] || []).map(g => (
-                      <option key={g} value={g}>
+                      <option key={g} value={g} className="bg-[#141417] text-[#e2e8f0]">
                         {g}
                       </option>
                     ))}
@@ -387,6 +567,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                       onClick={() => {
                         captureRef.current?.stopCapture()
                         setIsCapturing(false)
+                        handleStop() // Also stop analysis
                       }}
                       className="w-full py-3 text-red-500/50 hover:text-red-500 text-xs font-bold transition-colors"
                     >
@@ -418,6 +599,15 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
             selectedRaid={selectedRaid}
             selectedGate={selectedGate}
             ocrConfidence={ocrConfidence}
+            onNextGate={hasNextGate ? handleNextGate : null}
+            onChangeSelection={handleSelectionFromOverlay}
+            raids={raids}
+            raidMap={raidMap}
+            maxLines={selectedMaxLines}
+            analysisMode={analysisMode}
+            onStart={handleStart}
+            onPause={handlePause}
+            onStop={handleStop}
         />,
         pipWindow.document.body
     )}
