@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, forwardRef, useImperativeHandle } from 'react'
+import { useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react'
 import ScreenCaptureView from './components/ScreenCaptureView'
 import { useScreenShare } from './hooks/useScreenShare'
 import { useAspectCalibration } from './hooks/useAspectCalibration'
@@ -13,6 +13,8 @@ import { useBossLineSearching } from './hooks/useBossLineSearching'
 export type ScreenCaptureHandle = {
   startCapture: () => void
   stopCapture: () => void
+  getPhase: () => 'IDLE' | 'SETTING' | 'SEARCHING' | 'LOCKED'
+  getCanvas: () => HTMLCanvasElement | null
 }
 
 export const ScreenCaptureContainer = forwardRef<
@@ -20,8 +22,10 @@ export const ScreenCaptureContainer = forwardRef<
   {
     embed?: boolean
     onLineDetected?: (line: number | null, confidence?: number) => void
+    raidName?: string
+    gateName?: string
   }
->(function ScreenCaptureContainer({ embed = false, onLineDetected }, ref) {
+>(function ScreenCaptureContainer({ embed = false, onLineDetected, raidName, gateName }, ref) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const ocrPreviewCanvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -40,6 +44,12 @@ export const ScreenCaptureContainer = forwardRef<
       stopOCR()
       calibration.reset()
     },
+    getPhase() {
+      return calibration.phase
+    },
+    getCanvas() {
+      return ocrPreviewCanvasRef.current
+    }
   }))
 
   // ===== debug =====
@@ -82,16 +92,16 @@ const handleTuningChange = (v: Partial<RectTuning>) => {
 }
 
   // ===== Boss Line Searching (SEARCHING 전용) =====
+  const handleDetected = useCallback(() => {
+      calibration.lock()
+  }, [calibration.lock])
+
   useBossLineSearching({
     videoRef,
     canvasRef: ocrPreviewCanvasRef,
     rect: calibration.lockedRect,
     enabled: calibration.phase === 'SEARCHING',
-    recognize,
-    onDetected: line => {
-      calibration.lock()          // SEARCHING → LOCKED
-      onLineDetected?.(line)      // 외부 전달
-    },
+    onDetected: handleDetected,
   })
   // ===== OCR Loop =====
   useOCRLoop({

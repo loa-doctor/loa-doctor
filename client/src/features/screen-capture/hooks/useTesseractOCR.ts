@@ -37,6 +37,8 @@ export const useTesseractOCR = () => {
     [] // 의존성 제거로 인한 인터벌 안정화
   )
 
+
+
   const stop = useCallback(() => {
     // 필요한 경우 Tesseract 워커 종료 로직 추가 가능
     setLineText('')

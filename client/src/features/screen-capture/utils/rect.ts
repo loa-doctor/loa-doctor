@@ -68,7 +68,8 @@ export function lerpRect(from: Rect, to: Rect, t: number): Rect {
  * ===================================================== */
 
 export type RectTuning = {
-  scale: number // 0.05 ~ 1.0
+  scale: number // 0.05 ~ 1.0 (Height scale if widthRatio is present)
+
   padX: number // px
   padY: number // px
   offXRatio: number // -0.5 ~ 0.5
@@ -81,8 +82,8 @@ export type RectTuning = {
  */
 export function applyTuning(base: Rect, frameW: number, frameH: number, tuning: RectTuning): Rect {
   // scale
-  const scaledW = Math.round(base.w * tuning.scale)
   const scaledH = Math.round(base.h * tuning.scale)
+  const scaledW = Math.round(base.w * tuning.scale)
 
   // center
   const cx = base.x + base.w / 2

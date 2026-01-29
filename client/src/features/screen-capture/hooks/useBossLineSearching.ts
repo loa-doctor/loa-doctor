@@ -6,8 +6,8 @@ type UseBossLineSearchingProps = {
   canvasRef: RefObject<HTMLCanvasElement | null>
   rect: Rect | null
   enabled: boolean
-  recognize: (canvas: HTMLCanvasElement, callback?: (line: number | null, confidence: number) => void) => Promise<void>
-  onDetected: (line: number) => void
+  // Placeholder: scan dependency removed
+  onDetected: (tuning?: any) => void
   interval?: number
 }
 
@@ -16,36 +16,38 @@ export function useBossLineSearching({
   canvasRef,
   rect,
   enabled,
-  recognize,
   onDetected,
-  interval = 700,
+  interval = 1000,
 }: UseBossLineSearchingProps) {
   useEffect(() => {
     if (!enabled) return
     if (!videoRef.current || !canvasRef.current || !rect) return
 
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
     let stopped = false
+    
+    // Logic Rolled Back.
+    // Use a simple timeout to simulate "Search complete" or just wait for manual interaction?
+    // Given the user said "Rollback indexing", we assume we shouldn't try to find anything.
+    // We'll just transition to LOCKED after a short delay (simulating successful "check").
+    // OR, we can just sit in SEARCHING until manually locked?
+    // The previous implementation (before X-find) was a loop that counted to 3 and locked.
+    // Let's restore that simple behavior.
+    
     let cnt = 0
     const loop = async () => {
-      if (stopped) return
-      cnt++
-      if (cnt === 3) {
-        onDetected(cnt)
-        stopped = true
-      }
-
-      setTimeout(loop, interval)
+        if (stopped) return
+        cnt++
+        if (cnt >= 3) {
+            onDetected() // No tuning update
+            stopped = true
+            return
+        }
+        setTimeout(loop, interval)
     }
 
     loop()
     return () => {
       stopped = true
-      onDetected(cnt)
     }
-  }, [enabled, rect, recognize, onDetected, interval, videoRef, canvasRef])
+  }, [enabled, rect, onDetected, interval, videoRef, canvasRef])
 }

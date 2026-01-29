@@ -31,7 +31,9 @@ const OverlayContent = ({
     analysisMode, // 'IDLE' | 'RUNNING' | 'PAUSED'
     onStart,
     onPause,
-    onStop
+    onStop,
+    isDebugOverlay, // New Prop
+    captureRef,     // New Prop
 }: any) => {
     const rootRef = useRef<HTMLDivElement>(null)
     const [isSelectionMode, setIsSelectionMode] = useState(false)
@@ -161,6 +163,17 @@ const OverlayContent = ({
                />
            </div>
 
+            {/* Debug View (Middle Insert) */}
+            {isDebugOverlay && (
+                <div className="flex flex-col items-center justify-center p-2 bg-[#0a0a0c] border-b border-white/10 relative h-[180px] shrink-0">
+                    <DebugCanvasMirror captureRef={captureRef} />
+                    
+                    <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/50 rounded text-[9px] font-mono text-green-400 border border-green-500/30">
+                        {captureRef.current?.getPhase() || 'IDLE'}
+                    </div>
+                </div>
+            )}
+
            {/* Selection Mode UI */}
            {isSelectionMode && (
                <div className="p-4 bg-[#0a0a0c]/95 backdrop-blur absolute bottom-[50px] left-0 right-0 border-t border-white/10 space-y-3 z-10 transition-all">
@@ -270,6 +283,32 @@ const OverlayContent = ({
     )
 }
 
+// Helper: Canvas Mirror
+const DebugCanvasMirror = ({ captureRef }: { captureRef: any }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+    useEffect(() => {
+        let frameId: number
+        const render = () => {
+             const source = captureRef.current?.getCanvas()
+             const dest = canvasRef.current
+             if (source && dest) {
+                 const ctx = dest.getContext('2d')
+                 if (ctx) {
+                     if (dest.width !== source.width || dest.height !== source.height) {
+                         dest.width = source.width
+                         dest.height = source.height
+                     }
+                     ctx.drawImage(source, 0, 0)
+                 }
+             }
+             frameId = requestAnimationFrame(render)
+        }
+        render()
+        return () => cancelAnimationFrame(frameId)
+    }, [captureRef])
+    return <canvas ref={canvasRef} className="max-h-full max-w-full object-contain border border-white/20" />
+}
+
 export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   const router = useRouter()
   const pipWindowRef = useRef<Window | null>(null)
@@ -280,6 +319,10 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   
   // Analysis Mode State
   const [analysisMode, setAnalysisMode] = useState<'IDLE' | 'RUNNING' | 'PAUSED'>('IDLE')
+  
+  // Debug Controls
+  const [showDebugControls, setShowDebugControls] = useState(false)
+  const [isDebugOverlay, setIsDebugOverlay] = useState(false) // Whether current session is debug mode
 
   // Initialization fixed to prevent Hydration Error
   const [selectedRaid, setSelectedRaid] = useState(raids.length > 0 ? raids[0].name : '카멘')
@@ -358,12 +401,13 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   }, [selectedRaid, selectedGate, selectedDifficulty, resetSession])
   
   /* Control Handlers */
-  const handleStart = () => setAnalysisMode('RUNNING')
-  const handlePause = () => setAnalysisMode('PAUSED')
-  const handleStop = () => {
+  const handleStartAnalysis = () => setAnalysisMode('RUNNING')
+  const handlePauseAnalysis = () => setAnalysisMode('PAUSED')
+  const handleStopAnalysis = () => {
       setAnalysisMode('IDLE')
       resetSession()
       setOcrConfidence(undefined)
+      setIsDebugOverlay(false)
   }
 
   /* PiP Window State */
@@ -540,12 +584,47 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                 </div>
               </div>
               <div className="mt-10 space-y-3">
+                {/* Debug Settings Toggle */}
+                <div className="flex justify-end pr-2">
+                    <button 
+                    onClick={() => setShowDebugControls(prev => !prev)}
+                    className="text-[10px] text-slate-500 hover:text-slate-300 underline decoration-dotted"
+                    >
+                    {showDebugControls ? '디버그 설정 닫기' : '디버그 설정 열기'}
+                    </button>
+                </div>
+
+                {showDebugControls && (
+                    <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-2">
+                        <p className="text-xs text-slate-400 mb-2">개발자 디버깅 도구</p>
+                        <button
+                            onClick={async () => {
+                                setIsDebugOverlay(true)
+                                try {
+                                    await captureRef.current?.startCapture()
+                                    setIsCapturing(true)
+                                    handleStartAnalysis() // Set RUNNING
+                                    openGuidePip()
+                                } catch (e) {
+                                    console.error(e)
+                                }
+                            }}
+                            disabled={isCapturing}
+                            className="w-full py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 rounded text-xs font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-1"
+                        >
+                            <span>🛠️</span> 디버그 모드로 시작
+                        </button>
+                    </div>
+                )}
+                
                 {!isCapturing ? (
                   <button
                     onClick={async () => {
                       try {
                         await captureRef.current?.startCapture()
                         setIsCapturing(true)
+                        setIsDebugOverlay(false) // Normal Mode
+                        handleStartAnalysis() // Set RUNNING
                         openGuidePip()
                       } catch (e) {
                           console.error(e)
@@ -567,7 +646,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                       onClick={() => {
                         captureRef.current?.stopCapture()
                         setIsCapturing(false)
-                        handleStop() // Also stop analysis
+                        handleStopAnalysis() // Also stop analysis
                       }}
                       className="w-full py-3 text-red-500/50 hover:text-red-500 text-xs font-bold transition-colors"
                     >
@@ -605,9 +684,11 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
             raidMap={raidMap}
             maxLines={selectedMaxLines}
             analysisMode={analysisMode}
-            onStart={handleStart}
-            onPause={handlePause}
-            onStop={handleStop}
+            onStart={handleStartAnalysis}
+            onPause={handlePauseAnalysis}
+            onStop={handleStopAnalysis}
+            isDebugOverlay={isDebugOverlay}
+            captureRef={captureRef}
         />,
         pipWindow.document.body
     )}

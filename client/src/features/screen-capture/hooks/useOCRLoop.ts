@@ -32,7 +32,7 @@ export const useOCRLoop = ({
     if (!video.videoWidth || !video.videoHeight) return
     if (!calibration.lockedRect) return
 
-    const effectiveTuning = calibration.phase === 'LOCKED' ? tuning : { ...tuning, scale: 0.05 }
+    const effectiveTuning = tuning
 
     const tuned = applyTuning(
       calibration.lockedRect,
@@ -87,7 +87,7 @@ export const useOCRLoop = ({
   }, [calibration.lockedRect, calibration.phase, tuning, roi, videoRef, canvasRef])
 
   useEffect(() => {
-    if (calibration.phase !== 'LOCKED') return
+    if (calibration.phase !== 'LOCKED' && calibration.phase !== 'SEARCHING') return
     const canvas = canvasRef.current
     if (!canvas) return
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Rect, Aspect } from '../utils/types'
 import { calcLargestRect, pickBestRect, lerpRect } from '../utils/rect'
 
@@ -67,18 +67,22 @@ export function useAspectCalibration(videoRef: React.RefObject<HTMLVideoElement 
     return () => cancelAnimationFrame(raf)
   }, [phase])
 
+  const startSetting = useCallback(() => setPhase('SETTING'), [])
+  const lock = useCallback(() => setPhase('LOCKED'), [])
+  const reset = useCallback(() => {
+    setPhase('IDLE')
+    setAspect('UNKNOWN')
+    setDisplayRect(null)
+    setLockedRect(null)
+  }, [])
+
   return {
     phase,
     aspect,
     displayRect,
     lockedRect,
-    startSetting: () => setPhase('SETTING'),
-    reset: () => {
-      setPhase('IDLE')
-      setAspect('UNKNOWN')
-      setDisplayRect(null)
-      setLockedRect(null)
-    },
-    lock: () => setPhase('LOCKED'),
+    startSetting,
+    reset,
+    lock,
   }
 }
