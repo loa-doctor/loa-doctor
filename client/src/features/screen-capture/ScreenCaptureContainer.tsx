@@ -14,6 +14,7 @@ import { useOpenCV } from '../../hooks/useOpenCV'
 export type ScreenCaptureHandle = {
   startCapture: () => void
   stopCapture: () => void
+  startAlgorithm: () => void
   getPhase: () => 'IDLE' | 'SETTING' | 'SEARCHING' | 'LOCKED'
   getCanvas: () => HTMLCanvasElement | null
 }
@@ -39,7 +40,12 @@ export const ScreenCaptureContainer = forwardRef<
   useImperativeHandle(ref, () => ({
     startCapture() {
       start()
-      calibration.startSetting()
+      // calibration.startSetting() // Wait for explicit start
+    },
+    startAlgorithm() {
+      if (calibration.phase === 'IDLE') {
+          calibration.startSetting()
+      }
     },
     stopCapture() {
       stop()

@@ -42,48 +42,69 @@ const seedAegir = async () => {
         }
 
         // 4. Gate 1 PhaseGuides data
+        // Reset Gate 1 Guides
+        await PhaseGuide.deleteMany({ gateId: gate1._id })
+        console.log('Cleared existing Gate 1 guides')
+
         const gate1Guides = [
-            { line: 170, phase: "170줄", hint: "내부조 진입 및 쫄몹 무력화, 외부조 중앙 무력화 (라하르트 2타 활용)" },
-            { line: 145, phase: "145줄", hint: "화염 장판 회피 후 돌 뒤로 숨기, 게이지에 맞춰 저스트 가드" },
-            { line: 115, phase: "115줄", hint: "카운터 수행 및 실드 파괴" },
-            { line: 60, phase: "60줄", hint: "왼쪽 끝 대기 후 팔 파괴, 저스트 가드 후 오른쪽 끝 일리아칸 무력화" },
-            { line: 30, phase: "30줄", hint: "중앙 일리아칸 최종 무력화" }
+            { 
+                line: 198, 
+                phase: "돌 그림자 피하기", 
+                hint: "돌 그림자 위치 피하기\n일리아칸 부채꼴 피하기(맞으면 망자의 세계 추방)" 
+            },
+            { 
+                line: 170, 
+                phase: "내부 무력 (외부 쫄)", 
+                hint: "헤드 고정 후 내부 팟 머리대기\n내부진입 후 쫄 무력화 게이지 찾아서 무력화\n일리아칸 무력화 후 연합군 스킬(라하 2타)\n*딜 빠르면 에스더 아끼기",
+                imageUrl: "/guide-images/aegir/normal/g1/aegir_normal_1_170.jpg"
+            },
+            { 
+                line: 143, 
+                phase: "에기르 화염장판 피하기", 
+                hint: "빨간장판, 노란장판 피하고 노란장판 기둥 뒤 숨기\n*기둥 뒤 딱 붙을 것. 떨어지면 피격\n노란 장판 가득 차면 저스트가드(G)",
+                imageUrl: "/guide-images/aegir/normal/g1/aegir_normal_1_143.jpg"
+            },
+            { 
+                line: 115, 
+                phase: "발탄 카운터 + 실드까기", 
+                hint: "일리아칸 부채꼴 고정 후 빠지기\n발탄 잡기조심 / 발탄 도착 지점에서 카운터\n찰 때마다 연합군 스킬(라하 2타)",
+                imageUrl: "/guide-images/aegir/normal/g1/aegir_normal_1_115.jpg"
+            },
+            { 
+                line: 87, 
+                phase: "능지 패턴", 
+                hint: "원형피자 2칸에서 1칸으로 이동\n삼각피자 안전구역으로 이동\n피격 시 받피 20%\n팔에 떨어져서 물 닿기 전 저스트가드(G)",
+                imageUrl: "/guide-images/aegir/normal/g1/aegir_normal_1_87.jpg"
+            },
+            { 
+                line: 60, 
+                phase: "에기르 팔 파괴 -> 일리아칸 무력", 
+                hint: "9시 끝으로 이동 후 가로 줄 피하며 에기르 팔 파괴\n안전지대는 5줄 중 2줄 안전\n팔 파괴 후 타이밍 맞춰 저스트가드(G)\n일리아칸 무력화 때 연합군 스킬(라하 1타 추천)",
+                imageUrl: "/guide-images/aegir/normal/g1/aegir_normal_1_60.jpg"
+            },
+            { 
+                line: 30, 
+                phase: "무력 + 능지", 
+                hint: "원형피자, 삼각피자 피하면서 무력화\n일리아칸 무력화 때 연합군 스킬(라하 추천)" 
+            }
         ]
 
         for (const guide of gate1Guides) {
-            await PhaseGuide.findOneAndUpdate(
-                { gateId: gate1._id, line: guide.line },
-                { ...guide, gateId: gate1._id },
-                { upsert: true, new: true }
-            )
+            await PhaseGuide.create({ ...guide, gateId: gate1._id })
         }
-        console.log('Gate 1 Guides inserted/updated')
+        console.log('Gate 1 Guides inserted')
 
 
         // 5. Gate 2 생성/찾기
         let gate2 = await Gate.findOne({ difficultyId: difficulty._id, gateNumber: 2 })
-        if (!gate2) {
-            gate2 = await Gate.create({ difficultyId: difficulty._id, gateNumber: 2, name: '2관문' })
-            console.log('Gate 2 created')
-        } else {
-            console.log('Gate 2 already exists')
+        if (gate2) {
+             // Reset Gate 2 Guides
+            await PhaseGuide.deleteMany({ gateId: gate2._id })
+            console.log('Cleared existing Gate 2 guides')
         }
+        
+        // Gate 2 guides intentionally left empty as per request
 
-        // 6. Gate 2 PhaseGuides data
-        const gate2Guides = [
-            { line: 260, phase: "260줄", hint: "파티별 파편 파괴 후 중앙 심장 파괴, 내려찍기 시 저스트 가드" },
-            { line: 165, phase: "165줄", hint: "레이저 회피하며 심장 무력화 및 실드 파괴, 저스트 가드 후 에아달린 사용" },
-            { line: 95, phase: "95줄", hint: "낙사 구간 진입 및 지형 파괴 시작, 히든 에아달린 및 저스트 가드 집중" }
-        ]
-
-        for (const guide of gate2Guides) {
-            await PhaseGuide.findOneAndUpdate(
-                { gateId: gate2._id, line: guide.line },
-                { ...guide, gateId: gate2._id },
-                { upsert: true, new: true }
-            )
-        }
-        console.log('Gate 2 Guides inserted/updated')
 
         console.log('Seeding completed successfully')
     } catch (error) {

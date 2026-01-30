@@ -15,8 +15,8 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
   const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('IDLE')
   /* New State Structure */
   const [guidesState, setGuidesState] = useState<{
-    activeGuide: { hpPhase: string; hint: string; imageUrl?: string } | null
-    upcomingGuide: { hpPhase: string; hint: string; imageUrl?: string } | null
+    activeGuide: { line?: number; hpPhase: string; hint: string; imageUrl?: string } | null
+    upcomingGuide: { line?: number; hpPhase: string; hint: string; imageUrl?: string } | null
   }>({
     activeGuide: null,
     upcomingGuide: { hpPhase: '준비 완료', hint: '전투 시작 대기 중...' },
@@ -169,9 +169,10 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
           if (phaseGuides.length > 0 && currentLine <= phaseGuides[phaseGuides.length - 1].line) {
              const lastGuide = phaseGuides[phaseGuides.length - 1]
              active = {
+                 line: lastGuide.line,
                  hpPhase: `${lastGuide.line}줄: ${lastGuide.phase}`,
                  hint: lastGuide.hint,
-                 imageUrl: raidImages?.[lastGuide.line]
+                 imageUrl: lastGuide.imageUrl
              }
              upcoming = null
           }
@@ -179,18 +180,20 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
           // upcoming found
           const upG = phaseGuides[upcomingIdx]
           upcoming = {
+              line: upG.line,
               hpPhase: `${upG.line}줄: ${upG.phase}`,
               hint: upG.hint,
-              imageUrl: raidImages?.[upG.line]
+              imageUrl: upG.imageUrl
           }
 
           // Active is the one before upcoming (index - 1)
           if (upcomingIdx > 0) {
               const actG = phaseGuides[upcomingIdx - 1]
               active = {
+                line: actG.line,
                 hpPhase: `${actG.line}줄: ${actG.phase}`,
                 hint: actG.hint,
-                imageUrl: raidImages?.[actG.line]
+                imageUrl: actG.imageUrl
               }
           }
       }

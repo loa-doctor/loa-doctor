@@ -7,8 +7,6 @@ export function useScreenShare(videoRef: RefObject<HTMLVideoElement | null>) {
         frameRate: 15,
         // @ts-ignore
         displaySurface: 'window', 
-        // @ts-ignore
-        monitorTypeSurfaces: 'exclude'
       },
       audio: false,
     })

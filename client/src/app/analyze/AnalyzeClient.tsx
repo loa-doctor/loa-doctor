@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect, useCallback, useMemo, useLayoutEffect } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo, useLayoutEffect, Component, type ErrorInfo, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
@@ -11,7 +11,32 @@ import { useRaidAnalysis } from '@/src/features/raid/hooks/useRaidAnalysis'
 import { Raid, PhaseGuide } from '@/src/types/raid'
 
 
+class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: {children: ReactNode}) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
 
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Overlay Crash:", error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-red-900/90 text-red-200 text-xs h-screen overflow-auto">
+            <h3 className="font-bold mb-2">Overlay Error</h3>
+            <pre className="whitespace-pre-wrap font-mono">{this.state.error?.toString()}</pre>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 const OverlayContent = ({ 
     window: targetWindow, 
@@ -103,10 +128,25 @@ const OverlayContent = ({
     }, [targetWindow, isSelectionMode, activeGuide, upcomingGuide]) 
 
 
+    const [isCollapsed, setIsCollapsed] = useState(false)
+
+    // Helper Render
     // Helper Render
     const GuideBlock = ({ guide, type }: { guide: any, type: 'ACTIVE' | 'NEXT' }) => {
         if (!guide) return null
         const isActive = type === 'ACTIVE'
+        
+        // Ensure absolute URL for PiP compatibility
+        const getFullUrl = (path: string) => {
+            if (!path) return ''
+            if (path.startsWith('http')) return path
+            // Use window.location.origin (Main Window) context
+            if (typeof window !== 'undefined') {
+                return `${window.location.origin}${path}`
+            }
+            return path
+        }
+
         return (
             <div className={`flex flex-col justify-center px-4 py-3 shrink-0 rounded-xl border relative ${
                 isActive ? 'border-red-500/30 bg-red-500/5' : 'border-blue-500/20 bg-blue-500/5'
@@ -117,9 +157,29 @@ const OverlayContent = ({
                     }`}>
                         {type}
                     </span>
-                    <h2 className="text-[15px] font-bold text-white leading-none truncate">{guide.hpPhase}</h2>
+                    <h2 className="text-[15px] font-bold text-white leading-none truncate">{guide.phase || guide.hpPhase}</h2>
                 </div>
-                <p className="text-[13px] text-slate-300 leading-snug break-keep">{guide.hint}</p>
+                <p className="text-[13px] text-slate-300 leading-snug break-keep whitespace-pre-wrap">
+                    {guide.hint}
+                </p>
+                {/* Guide Image Display - Only for ACTIVE */}
+                {type === 'ACTIVE' && guide.imageUrl && (
+                    <div className="mt-2 rounded-lg overflow-hidden border border-white/10 bg-black/50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img 
+                            src={getFullUrl(guide.imageUrl)} 
+                            alt="Guide Visual" 
+                            className="w-full h-auto object-contain max-h-[200px]"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none' 
+                                if (e.currentTarget.parentElement) {
+                                    e.currentTarget.parentElement.innerText = '이미지 로드 실패'
+                                    e.currentTarget.parentElement.className = "mt-2 p-2 text-[10px] text-red-500 bg-red-500/10 rounded border border-red-500/20 text-center"
+                                }
+                            }} 
+                        />
+                    </div>
+                )}
             </div>
         )
     }
@@ -130,12 +190,31 @@ const OverlayContent = ({
     }
 
     return (
-        <div ref={rootRef} className="flex flex-col w-full h-screen bg-[#0a0a0c] text-[#e2e8f0] font-sans select-none overflow-hidden box-border">
+        <ErrorBoundary>
+            <div ref={rootRef} className={`flex flex-col w-full bg-[#0a0a0c] text-[#e2e8f0] font-sans select-none overflow-hidden box-border ${isCollapsed ? 'h-auto' : 'h-screen'}`}>
            {/* Header */}
            <div className="flex items-center justify-between px-5 py-3 bg-[#141417] border-b border-white/5 h-[48px] shrink-0 box-border relative z-20">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">RAID MONITOR</span>
-                <span className="text-[13px] font-bold text-white/90">{selectedRaid} {selectedGate}</span>
+              <div className="flex items-center gap-3">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">RAID MONITOR</span>
+                    <span className="text-[13px] font-bold text-white/90">{selectedRaid} {selectedGate}</span>
+                  </div>
+                  {/* Collapse Toggle */}
+                  <button 
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="p-1 hover:bg-white/10 rounded text-slate-500 hover:text-white transition-colors"
+                    title={isCollapsed ? "Expand" : "Collapse"}
+                  >
+                    {isCollapsed ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
+                        </svg>
+                    ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                    )}
+                  </button>
               </div>
               
               <div className="flex gap-4">
@@ -155,146 +234,147 @@ const OverlayContent = ({
               </div>
            </div>
 
-           {/* Visual HP Bar */}
-           <div className="w-full h-3 bg-white/5 relative shrink-0">
-               <div 
-                   className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-                   style={{ width: `${hpPercent}%` }}
-               />
-           </div>
-
-            {/* Debug Canvas Mirror (PIP) */}
-            {isDebugOverlay && (
-                <div className="w-full aspect-video bg-black border-b border-white/10 relative shrink-0">
-                     <DebugCanvasMirror captureRef={captureRef} />
-                     <div className="absolute top-1 left-1 px-1 bg-black/50 text-[8px] text-green-400">DEBUG VIEW</div>
-                </div>
-            )}
-
-            {/* Searching Panel */}
-            {analysisMode === 'SEARCHING' && (
-               <div className="absolute bottom-[60px] left-4 right-4 bg-black/80 backdrop-blur border border-blue-500/30 rounded-xl z-50 p-3 flex items-center gap-4">
-                    <div className="h-10 w-10 flex items-center justify-center">
-                        <div className="h-8 w-8 rounded-full border-4 border-t-blue-500 border-white/10 animate-spin" />
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-blue-500 font-black text-base leading-none tracking-wider">SEARCHING...</span>
-                        <div className="text-slate-400 text-[10px] font-mono">
-                            Looking for "x [Number]" pattern...
-                        </div>
-                    </div>
-               </div>
-            )}
-
-            {/* Debug View (Middle Insert) - REMOVED */}
-
-
-           {/* Selection Mode UI */}
-           {isSelectionMode && (
-               <div className="p-4 bg-[#0a0a0c]/95 backdrop-blur absolute bottom-[50px] left-0 right-0 border-t border-white/10 space-y-3 z-10 transition-all">
-                   <div className="grid grid-cols-3 gap-2">
-                       <select 
-                           value={tempRaid} 
-                           onChange={e => {
-                               setTempRaid(e.target.value)
-                               const r = raids.find((x:any) => x.name === e.target.value)
-                               if(r && r.difficulties.length > 0) {
-                                   setTempDiff(r.difficulties[0].name)
-                                   if(r.difficulties[0].gates.length > 0) {
-                                       setTempGate(r.difficulties[0].gates[0].name)
-                                   }
-                               }
-                           }}
-                           className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
-                       >
-                           {raids.map((r: any) => <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">{r.name}</option>)}
-                       </select>
-                       <select 
-                           value={tempDiff} 
-                           onChange={e => {
-                               setTempDiff(e.target.value)
-                               const r = raids.find((x:any) => x.name === tempRaid)
-                               const d = r?.difficulties.find((x:any) => x.name === e.target.value)
-                               if(d && d.gates.length > 0) setTempGate(d.gates[0].name)
-                           }}
-                           className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
-                       >
-                           {Object.keys(raidMap[tempRaid] || {}).map(d => <option key={d} value={d} className="bg-[#141417] text-[#e2e8f0]">{d}</option>)}
-                       </select>
-                       <select 
-                           value={tempGate} 
-                           onChange={e => setTempGate(e.target.value)}
-                           className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
-                       >
-                           {(raidMap[tempRaid]?.[tempDiff] || []).map((g:string) => <option key={g} value={g} className="bg-[#141417] text-[#e2e8f0]">{g}</option>)}
-                       </select>
+           {!isCollapsed && (
+               <>
+                   {/* Visual HP Bar */}
+                   <div className="w-full h-3 bg-white/5 relative shrink-0">
+                       <div 
+                           className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                           style={{ width: `${hpPercent}%` }}
+                       />
                    </div>
-                   <button 
-                       onClick={handleConfirmSelection}
-                       className="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold text-white transition-colors"
-                   >
-                       변경 적용
-                   </button>
-               </div>
+
+                   {/* Debug Canvas Mirror (PIP) */}
+                   {isDebugOverlay && (
+                       <div className="w-full aspect-video bg-black border-b border-white/10 relative shrink-0">
+                            <DebugCanvasMirror captureRef={captureRef} />
+                            <div className="absolute top-1 left-1 px-1 bg-black/50 text-[8px] text-green-400">DEBUG VIEW</div>
+                       </div>
+                   )}
+
+                   {/* Searching Panel */}
+                   {analysisMode === 'SEARCHING' && (
+                       <div className="absolute bottom-[60px] left-4 right-4 bg-black/80 backdrop-blur border border-blue-500/30 rounded-xl z-50 p-3 flex items-center gap-4">
+                            <div className="h-10 w-10 flex items-center justify-center">
+                                <div className="h-8 w-8 rounded-full border-4 border-t-blue-500 border-white/10 animate-spin" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-blue-500 font-black text-base leading-none tracking-wider">SEARCHING...</span>
+                                <div className="text-slate-400 text-[10px] font-mono">
+                                    Looking for "x [Number]" pattern...
+                                </div>
+                            </div>
+                       </div>
+                   )}
+                   {/* Selection Mode UI */}
+                   {isSelectionMode && (
+                       <div className="p-4 bg-[#0a0a0c]/95 backdrop-blur absolute bottom-[50px] left-0 right-0 border-t border-white/10 space-y-3 z-10 transition-all">
+                           <div className="grid grid-cols-3 gap-2">
+                               <select 
+                                   value={tempRaid} 
+                                   onChange={e => {
+                                       setTempRaid(e.target.value)
+                                       const r = raids.find((x:any) => x.name === e.target.value)
+                                       if(r && r.difficulties.length > 0) {
+                                           setTempDiff(r.difficulties[0].name)
+                                           if(r.difficulties[0].gates.length > 0) {
+                                               setTempGate(r.difficulties[0].gates[0].name)
+                                           }
+                                       }
+                                   }}
+                                   className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
+                               >
+                                   {raids.map((r: any) => <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">{r.name}</option>)}
+                               </select>
+                               <select 
+                                   value={tempDiff} 
+                                   onChange={e => {
+                                       setTempDiff(e.target.value)
+                                       const r = raids.find((x:any) => x.name === tempRaid)
+                                       const d = r?.difficulties.find((x:any) => x.name === e.target.value)
+                                       if(d && d.gates.length > 0) setTempGate(d.gates[0].name)
+                                   }}
+                                   className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
+                               >
+                                   {Object.keys(raidMap[tempRaid] || {}).map(d => <option key={d} value={d} className="bg-[#141417] text-[#e2e8f0]">{d}</option>)}
+                               </select>
+                               <select 
+                                   value={tempGate} 
+                                   onChange={e => setTempGate(e.target.value)}
+                                   className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
+                               >
+                                   {(raidMap[tempRaid]?.[tempDiff] || []).map((g:string) => <option key={g} value={g} className="bg-[#141417] text-[#e2e8f0]">{g}</option>)}
+                               </select>
+                           </div>
+                           <button 
+                               onClick={handleConfirmSelection}
+                               className="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold text-white transition-colors"
+                           >
+                               변경 적용
+                           </button>
+                       </div>
+                   )}
+
+                   {/* Guides: Fill the remaining space */}
+                   <div className="flex flex-col flex-1 p-4 gap-3 shrink-0 box-border overflow-hidden pb-[60px]">
+                       {activeGuide && <GuideBlock guide={activeGuide} type="ACTIVE" />}
+                       {upcomingGuide && <GuideBlock guide={upcomingGuide} type="NEXT" />}
+                   </div>
+
+                   {/* Fixed Footer */}
+                   <div className="absolute bottom-0 left-0 right-0 h-[50px] bg-[#141417] border-t border-white/5 flex items-center justify-between px-4 z-20">
+                       <button 
+                           onClick={() => setIsSelectionMode(!isSelectionMode)}
+                           className={`px-3 py-1.5 rounded transition-all flex items-center gap-2 text-xs font-bold ${isSelectionMode ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
+                       >
+                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                           </svg>
+                           {isSelectionMode ? '닫기' : '설정'}
+                       </button>
+
+                       {/* Control Buttons */}
+                       <div className="flex items-center gap-2">
+                           {analysisMode !== 'RUNNING' && (
+                               <button onClick={onStart} className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 text-green-500 transition-colors">
+                                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                   </svg>
+                               </button>
+                           )}
+                           {analysisMode === 'RUNNING' && (
+                               <button onClick={onPause} className="p-1.5 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 transition-colors">
+                                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                   </svg>
+                               </button>
+                           )}
+                           <button onClick={onStop} className="p-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors">
+                               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                               </svg>
+                           </button>
+                       </div>
+
+                       {onNextGate && (
+                           <button 
+                               onClick={onNextGate}
+                               className="px-4 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 border border-blue-500/30 rounded text-xs font-bold transition-all flex items-center gap-1"
+                           >
+                               다음 관문
+                               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                               </svg>
+                           </button>
+                       )}
+                   </div>
+               </>
            )}
-
-           {/* Guides: Fill the remaining space */}
-           <div className="flex flex-col flex-1 p-4 gap-3 shrink-0 box-border overflow-hidden pb-[60px]">
-               {activeGuide && <GuideBlock guide={activeGuide} type="ACTIVE" />}
-               {upcomingGuide && <GuideBlock guide={upcomingGuide} type="NEXT" />}
-           </div>
-
-           {/* Fixed Footer */}
-           <div className="absolute bottom-0 left-0 right-0 h-[50px] bg-[#141417] border-t border-white/5 flex items-center justify-between px-4 z-20">
-               <button 
-                   onClick={() => setIsSelectionMode(!isSelectionMode)}
-                   className={`px-3 py-1.5 rounded transition-all flex items-center gap-2 text-xs font-bold ${isSelectionMode ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
-               >
-                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                   </svg>
-                   {isSelectionMode ? '닫기' : '설정'}
-               </button>
-
-               {/* Control Buttons */}
-               <div className="flex items-center gap-2">
-                   {analysisMode !== 'RUNNING' && (
-                       <button onClick={onStart} className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 text-green-500 transition-colors">
-                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                           </svg>
-                       </button>
-                   )}
-                   {analysisMode === 'RUNNING' && (
-                       <button onClick={onPause} className="p-1.5 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 transition-colors">
-                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                           </svg>
-                       </button>
-                   )}
-                   <button onClick={onStop} className="p-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors">
-                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-                       </svg>
-                   </button>
-               </div>
-
-               {onNextGate && (
-                   <button 
-                       onClick={onNextGate}
-                       className="px-4 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 border border-blue-500/30 rounded text-xs font-bold transition-all flex items-center gap-1"
-                   >
-                       다음 관문
-                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                       </svg>
-                   </button>
-               )}
-           </div>
         </div>
+    </ErrorBoundary>
     )
 }
 
@@ -404,6 +484,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
 
   /* Conf state */
   const [ocrConfidence, setOcrConfidence] = useState<number | undefined>(undefined)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const {
     rawHp,
@@ -426,19 +507,67 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   }, [onLineDetectedOriginal, analysisMode])
 
   useEffect(() => {
-    const gateNumber = Number(selectedGate.replace('관문', ''))
+    const gateNumber = Number(selectedGate.replace(/[^0-9]/g, ''))
+    
+    // Cache Key (Version 2)
+    const cacheKey = `loa-doctor:guides:v2:${selectedRaid}:${selectedDifficulty}:${gateNumber}`
+
+    // 1. Try Load from Cache (Instant Paint)
+    if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+            try {
+                const cachedData = JSON.parse(cached)
+                if (Array.isArray(cachedData) && cachedData.length > 0) {
+                    setPhaseGuides(cachedData)
+                    resetSession()
+                }
+            } catch (e) {
+                console.error("Cache parse error", e)
+                localStorage.removeItem(cacheKey)
+            }
+        }
+    }
+
+    // 2. Background Fetch (Stale-While-Revalidate)
+    // Always fetch to check for updates from Admin
     fetch(
       `${process.env.NEXT_PUBLIC_API_BASE}/api/raids/guides?boss=${selectedRaid}&difficulty=${selectedDifficulty}&gate=${gateNumber}`
     )
-      .then(res => res.json())
+      .then(res => {
+          if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
+          return res.json()
+      })
       .then(data => {
-        setPhaseGuides(data.sort((a: any, b: any) => b.line - a.line))
-        resetSession()
+        const sorted = data.sort((a: any, b: any) => b.line - a.line)
+        
+        // Update State & Cache with fresh data
+        setPhaseGuides(sorted)
+        resetSession() // Reset current active guide calculation? Maybe optional but safe.
+        
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(cacheKey, JSON.stringify(sorted))
+        }
+
+        // Preload Images
+        sorted.forEach((g: any) => {
+             if (g.imageUrl) {
+                 const img = new Image()
+                 img.src = g.imageUrl
+             }
+        })
+      })
+      .catch(err => {
+          console.error("Fetch error:", err)
+          setFetchError(err.toString())
       })
   }, [selectedRaid, selectedGate, selectedDifficulty, resetSession])
   
   /* Control Handlers */
-  const handleStartAnalysis = () => setAnalysisMode('RUNNING')
+  const handleStartAnalysis = () => {
+      captureRef.current?.startAlgorithm()
+      setAnalysisMode('RUNNING')
+  }
   const handlePauseAnalysis = () => setAnalysisMode('PAUSED')
   const handleStopAnalysis = () => {
       setAnalysisMode('IDLE')
@@ -655,18 +784,18 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                 )}
                 
                 {!isCapturing ? (
-                  <button
-                    onClick={async () => {
-                      try {
-                        await captureRef.current?.startCapture()
-                        setIsCapturing(true)
-                        setIsDebugOverlay(false) // Normal Mode
-                        handleStartAnalysis() // Set RUNNING
-                        openGuidePip()
-                      } catch (e) {
-                          console.error(e)
-                      }
-                    }}
+                    <button
+                        onClick={async () => {
+                          try {
+                            await captureRef.current?.startCapture()
+                            setIsCapturing(true)
+                            setIsDebugOverlay(false) // Normal Mode
+                            // handleStartAnalysis() // Removed to allow manual start from Overlay
+                            openGuidePip()
+                          } catch (e) {
+                              console.error(e)
+                          }
+                        }}
                     className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black transition-all shadow-xl shadow-blue-600/20 uppercase tracking-widest text-sm"
                   >
                     Analyze Start
