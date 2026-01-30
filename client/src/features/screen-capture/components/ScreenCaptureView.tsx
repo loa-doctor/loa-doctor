@@ -57,7 +57,9 @@ export default function ScreenCaptureView({
       </div>
 
       <OCRPreviewCanvas ref={ocrPreviewCanvasRef} />
-      <video ref={videoRef} className="hidden" />
+      
+      {/* Hidden Video for stream capture */}
+      <video ref={videoRef} muted autoPlay playsInline className="hidden border-2 border-green-500 w-[300px]" />
 
       {!debugOn && (
         <>

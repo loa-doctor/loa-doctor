@@ -87,7 +87,7 @@ export const useOCRLoop = ({
   }, [calibration.lockedRect, calibration.phase, tuning, roi, videoRef, canvasRef])
 
   useEffect(() => {
-    if (calibration.phase !== 'LOCKED' && calibration.phase !== 'SEARCHING') return
+    if (calibration.phase !== 'LOCKED') return
     const canvas = canvasRef.current
     if (!canvas) return
 

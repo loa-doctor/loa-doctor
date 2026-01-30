@@ -9,6 +9,7 @@ import { type RectTuning } from './utils/rect'
 import { STORAGE_KEYS } from './utils/storageKeys'
 import { useOCRLoop } from './hooks/useOCRLoop'
 import { useBossLineSearching } from './hooks/useBossLineSearching'
+import { useOpenCV } from '../../hooks/useOpenCV'
 
 export type ScreenCaptureHandle = {
   startCapture: () => void
@@ -33,6 +34,7 @@ export const ScreenCaptureContainer = forwardRef<
   const { start, stop } = useScreenShare(videoRef)
   const calibration = useAspectCalibration(videoRef)
   const { lineText, recognize, stop: stopOCR } = useTesseractOCR()
+  const { cv, loaded: cvLoaded } = useOpenCV()
 
   useImperativeHandle(ref, () => ({
     startCapture() {
@@ -92,9 +94,47 @@ const handleTuningChange = (v: Partial<RectTuning>) => {
 }
 
   // ===== Boss Line Searching (SEARCHING 전용) =====
-  const handleDetected = useCallback(() => {
+  const handleDetected = useCallback((foundRect: any) => {
+      // 1. Get Base Rect (Should be the 16:9/21:9 Screen Fit)
+      const base = calibration.lockedRect
+      if (!base) return
+
+      // 2. Target Constants (User Requested)
+      const TARGET_SCALE = 0.04 // Width Ratio
+      const TARGET_OFF_Y = -0.430 // Fixed Y Offset
+      const TARGET_THRESH = 50
+      
+      // 3. Calculate Ratio for Left Alignment
+      // Goal: LockedRect.x === foundRect.x (Left borders match)
+      // LockedRect.x = (Center - ScaledW/2) + OffsetPx
+      
+      const cx = base.x + base.w / 2
+      const scaledW = base.w * TARGET_SCALE
+      const defaultLeft = cx - scaledW / 2
+      
+      const targetLeft = foundRect.x
+      const requiredOffsetPx = targetLeft - defaultLeft
+      const calculatedRatio = requiredOffsetPx / base.w
+      
+      console.log('[Capture] Auto-Lock Alignment:', {
+          foundX: foundRect.x,
+          defaultLeft,
+          requiredOffsetPx,
+          ratio: calculatedRatio,
+          debugCheck: defaultLeft + (base.w * calculatedRatio)
+      })
+
+      // 4. Update User Tuning
+      handleTuningChange({
+          scale: TARGET_SCALE,
+          threshold: TARGET_THRESH,
+          offYRatio: TARGET_OFF_Y,
+          offXRatio: calculatedRatio
+      })
+
+      // 5. Switch to LOCKED phase
       calibration.lock()
-  }, [calibration.lock])
+  }, [calibration])
 
   useBossLineSearching({
     videoRef,
@@ -102,6 +142,7 @@ const handleTuningChange = (v: Partial<RectTuning>) => {
     rect: calibration.lockedRect,
     enabled: calibration.phase === 'SEARCHING',
     onDetected: handleDetected,
+    recognize,
   })
   // ===== OCR Loop =====
   useOCRLoop({

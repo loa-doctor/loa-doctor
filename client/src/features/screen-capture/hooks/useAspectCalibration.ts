@@ -7,6 +7,7 @@ export type CalibrationState = {
   aspect: Aspect
   displayRect: Rect | null
   lockedRect: Rect | null
+  setLockedRect: (rect: Rect) => void
   startSetting: () => void
   reset: () => void
   lock: () => void
@@ -20,16 +21,19 @@ export function useAspectCalibration(videoRef: React.RefObject<HTMLVideoElement 
 
   useEffect(() => {
     if (phase !== 'SETTING') return
-    const video = videoRef.current
-    if (!video) return
+    if (phase !== 'SETTING') return
 
     let raf = 0
     let start = 0
     let last: Rect | null = null
 
     const tick = (ts: number) => {
+      const video = videoRef.current
       if (!start) start = ts
-      if (!video.videoWidth) return (raf = requestAnimationFrame(tick))
+      if (!video || !video.videoWidth) {
+           raf = requestAnimationFrame(tick)
+           return
+      }
 
       const w = video.videoWidth
       const h = video.videoHeight
@@ -81,6 +85,7 @@ export function useAspectCalibration(videoRef: React.RefObject<HTMLVideoElement 
     aspect,
     displayRect,
     lockedRect,
+    setLockedRect,
     startSetting,
     reset,
     lock,

@@ -163,16 +163,31 @@ const OverlayContent = ({
                />
            </div>
 
-            {/* Debug View (Middle Insert) */}
+            {/* Debug Canvas Mirror (PIP) */}
             {isDebugOverlay && (
-                <div className="flex flex-col items-center justify-center p-2 bg-[#0a0a0c] border-b border-white/10 relative h-[180px] shrink-0">
-                    <DebugCanvasMirror captureRef={captureRef} />
-                    
-                    <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/50 rounded text-[9px] font-mono text-green-400 border border-green-500/30">
-                        {captureRef.current?.getPhase() || 'IDLE'}
-                    </div>
+                <div className="w-full aspect-video bg-black border-b border-white/10 relative shrink-0">
+                     <DebugCanvasMirror captureRef={captureRef} />
+                     <div className="absolute top-1 left-1 px-1 bg-black/50 text-[8px] text-green-400">DEBUG VIEW</div>
                 </div>
             )}
+
+            {/* Searching Panel */}
+            {analysisMode === 'SEARCHING' && (
+               <div className="absolute bottom-[60px] left-4 right-4 bg-black/80 backdrop-blur border border-blue-500/30 rounded-xl z-50 p-3 flex items-center gap-4">
+                    <div className="h-10 w-10 flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-full border-4 border-t-blue-500 border-white/10 animate-spin" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-blue-500 font-black text-base leading-none tracking-wider">SEARCHING...</span>
+                        <div className="text-slate-400 text-[10px] font-mono">
+                            Looking for "x [Number]" pattern...
+                        </div>
+                    </div>
+               </div>
+            )}
+
+            {/* Debug View (Middle Insert) - REMOVED */}
+
 
            {/* Selection Mode UI */}
            {isSelectionMode && (
@@ -284,29 +299,51 @@ const OverlayContent = ({
 }
 
 // Helper: Canvas Mirror
-const DebugCanvasMirror = ({ captureRef }: { captureRef: any }) => {
+function DebugCanvasMirror({ captureRef }: { captureRef: any }) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     useEffect(() => {
         let frameId: number
         const render = () => {
-             const source = captureRef.current?.getCanvas()
              const dest = canvasRef.current
-             if (source && dest) {
-                 const ctx = dest.getContext('2d')
-                 if (ctx) {
-                     if (dest.width !== source.width || dest.height !== source.height) {
-                         dest.width = source.width
-                         dest.height = source.height
-                     }
-                     ctx.drawImage(source, 0, 0)
+             if (!dest) return
+
+             const ctx = dest.getContext('2d')
+             if (!ctx) return
+
+             const source = captureRef.current?.getCanvas()
+             
+             // Clear
+             ctx.fillStyle = '#111'
+             ctx.fillRect(0, 0, dest.width, dest.height)
+
+             if (source) {
+                 if (dest.width !== source.width || dest.height !== source.height) {
+                     dest.width = source.width || 300
+                     dest.height = source.height || 150
                  }
+                 if (source.width > 0) {
+                     ctx.drawImage(source, 0, 0)
+                 } else {
+                     ctx.fillStyle = 'red'
+                     ctx.fillText('Source Canvas Empty 0x0', 10, 50)
+                 }
+             } else {
+                 ctx.fillStyle = 'red'
+                 ctx.fillText('No Source Canvas (Ref missing)', 10, 50)
              }
+             
+             // Heartbeat
+             ctx.fillStyle = '#0f0'
+             ctx.font = '12px monospace'
+             ctx.fillText(`Live: ${(Date.now() / 1000).toFixed(1)}s`, 10, 20)
+             ctx.fillText(`Phase: ${captureRef.current?.getPhase()}`, 10, 35)
+
              frameId = requestAnimationFrame(render)
         }
         render()
         return () => cancelAnimationFrame(frameId)
     }, [captureRef])
-    return <canvas ref={canvasRef} className="max-h-full max-w-full object-contain border border-white/20" />
+    return <canvas ref={canvasRef} className="w-full h-full object-contain border border-white/20" />
 }
 
 export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
