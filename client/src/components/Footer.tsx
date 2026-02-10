@@ -1,6 +1,13 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
+
 export const Footer = () => {
+  const pathname = usePathname()
+  const isSmartCrafting = pathname?.startsWith('/smart-crafting')
+
+  if (isSmartCrafting) return null
+
   return (
     <section className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-white/5 mt-10">
       <div className="text-center md:text-left">

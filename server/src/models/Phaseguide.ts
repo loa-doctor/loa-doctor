@@ -20,10 +20,7 @@ const PhaseGuideSchema = new Schema(
       type: String,
       required: true, // 공략 설명
     },
-    imageUrl: {
-      type: String,
-      required: false, // Optional image URL
-    },
+
   },
   { timestamps: true }
 )

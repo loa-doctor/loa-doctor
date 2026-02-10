@@ -23,7 +23,7 @@ export function TuningRow({
     <div className="space-y-1">
       <div className="text-sm font-medium">
         {label}:{' '}
-        <span className="font-mono tabular-nums">
+        <span className="tabular-nums">
           {displayValue ?? value}
         </span>
       </div>
@@ -54,7 +54,7 @@ export function TuningRow({
             bg-zinc-900
             border border-zinc-700
             rounded
-            font-mono
+            tabular-nums
             tabular-nums
           "
         />

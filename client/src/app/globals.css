@@ -1,16 +1,82 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --font-roboto: "Roboto", sans-serif;
+  --font-pretendard: "Pretendard", sans-serif;
+}
 
 /* 기본 리셋 / 테스트용 */
 html,
 body {
   padding: 0;
   margin: 0;
+  font-family: var(--font-pretendard);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
+/* Base Theme Variables from loa_for_me_temp + loa-doctor */
 :root {
-  --bg-main: #020617;
-  --bg-panel: #0f172a;
-  --border: #1e293b;
+  /* Default (Midnight) */
+  --bg-main: #0f111a;
+  --bg-panel: #1a1d29;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --color-primary: #3b82f6; /* blue-500 */
+  --color-secondary: #6366f1; /* indigo-500 */
+  --color-accent: #fbbf24; /* amber-400 */
+  --color-success: #34d399; /* emerald-400 */
+  --color-danger: #f87171; /* red-400 */
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border: #1e293b; /* kept from loa-doctor just in case */
 }
+
+/* Theme Overrides from loa_for_me_temp */
+[data-theme='forest'] {
+  --bg-main: #051a10;
+  --bg-panel: #0f291e;
+  --color-primary: #10b981; /* emerald-500 */
+  --color-secondary: #059669; /* emerald-600 */
+  --color-accent: #fcd34d; /* amber-300 */
+  --color-success: #34d399;
+  --color-danger: #f87171;
+}
+
+[data-theme='ocean'] {
+  --bg-main: #0c1524;
+  --bg-panel: #152238;
+  --color-primary: #06b6d4; /* cyan-500 */
+  --color-secondary: #0ea5e9; /* sky-500 */
+  --color-accent: #fde047; /* yellow-300 */
+  --color-success: #4ade80;
+  --color-danger: #f87171;
+}
+
+[data-theme='obsidian'] {
+  /* High Contrast / Dark Red */
+  --bg-main: #000000;
+  --bg-panel: #111111;
+  --color-primary: #ef4444; /* red-500 */
+  --color-secondary: #dc2626; /* red-600 */
+  --color-accent: #ffffff;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+}
+
+[data-theme='sunset'] {
+  --bg-main: #1a0b0b;
+  --bg-panel: #291212;
+  --color-primary: #f97316; /* orange-500 */
+  --color-secondary: #db2777; /* pink-600 */
+  --color-accent: #facc15; /* yellow-400 */
+  --color-success: #a3e635;
+  --color-danger: #fb7185;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { PhaseGuide, AnalysisStatus } from '@/src/types/raid'
-import { GUIDE_IMAGES } from '@/src/data/guideImages'
+
 
 interface UseRaidAnalysisProps {
   phaseGuides: PhaseGuide[]
@@ -14,9 +14,10 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
   const [filteredHp, setFilteredHp] = useState<number>(0)
   const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('IDLE')
   /* New State Structure */
+  /* New State Structure */
   const [guidesState, setGuidesState] = useState<{
-    activeGuide: { line?: number; hpPhase: string; hint: string; imageUrl?: string } | null
-    upcomingGuide: { line?: number; hpPhase: string; hint: string; imageUrl?: string } | null
+    activeGuide: { line?: number; hpPhase: string; hint: string } | null
+    upcomingGuide: { line?: number; hpPhase: string; hint: string } | null
   }>({
     activeGuide: null,
     upcomingGuide: { hpPhase: '준비 완료', hint: '전투 시작 대기 중...' },
@@ -145,7 +146,7 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
       let active: typeof guidesState.activeGuide = null
       let upcoming: typeof guidesState.upcomingGuide = null
 
-      const raidImages = GUIDE_IMAGES[selectedRaid]?.[selectedGate]
+
 
       if (upcomingIdx === -1) {
           // If not found, it means currentLine <= all guides? (e.g. 0)
@@ -172,7 +173,6 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
                  line: lastGuide.line,
                  hpPhase: `${lastGuide.line}줄: ${lastGuide.phase}`,
                  hint: lastGuide.hint,
-                 imageUrl: lastGuide.imageUrl
              }
              upcoming = null
           }
@@ -183,7 +183,6 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
               line: upG.line,
               hpPhase: `${upG.line}줄: ${upG.phase}`,
               hint: upG.hint,
-              imageUrl: upG.imageUrl
           }
 
           // Active is the one before upcoming (index - 1)
@@ -193,7 +192,6 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
                 line: actG.line,
                 hpPhase: `${actG.line}줄: ${actG.phase}`,
                 hint: actG.hint,
-                imageUrl: actG.imageUrl
               }
           }
       }

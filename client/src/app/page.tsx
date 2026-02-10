@@ -46,6 +46,12 @@ export default function HomePage() {
             >
               지금 시작하기
             </Link>
+            <Link
+              href="/smart-crafting"
+              className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-lg transition-all shadow-lg shadow-black/20 active:scale-95 border border-white/5"
+            >
+              스마트 제작 관리자
+            </Link>
           </div>
         </div>
 

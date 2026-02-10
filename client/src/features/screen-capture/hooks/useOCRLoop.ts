@@ -7,7 +7,7 @@ type UseOCRLoopProps = {
   canvasRef: RefObject<HTMLCanvasElement | null>
   calibration: CalibrationState
   tuning: RectTuning
-  recognize: (canvas: HTMLCanvasElement, callback?: (line: number | null, confidence: number) => void) => Promise<void>
+  recognize: (canvas: HTMLCanvasElement, callback?: (line: number | null, confidence: number) => void) => Promise<any>
   onLineDetected?: (line: number | null, confidence: number) => void
   roi?: { x: number; y: number; w: number; h: number }
   interval?: number

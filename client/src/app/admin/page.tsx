@@ -29,6 +29,24 @@ export default function AdminPage() {
        : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
    }`
 
+  /* Snapshot Save */
+  const saveSnapshot = async () => {
+    const ID = 'snapshot'
+    try {
+      setLoading(true)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/snapshot`, {
+        method: 'POST',
+      })
+      if (!res.ok) throw new Error('저장 실패')
+      showFeedback(ID, '현재 상태가 기초값으로 저장되었습니다.')
+    } catch (err) {
+      showFeedback(ID, '스냅샷 저장 실패', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /* Reset (Restore) */
   const resetRaid = async () => {
     const ID = 'reset'
     try {
@@ -41,7 +59,12 @@ export default function AdminPage() {
 
       if (!res.ok) throw new Error('요청 실패')
 
-      showFeedback(ID, '레이드 데이터 초기화 완료')
+      const data = await res.json()
+      // 메시지에 따라 피드백 다르게
+      showFeedback(ID, data.message || '레이드 데이터 초기화 완료')
+      
+      // Refetch structure to get new IDs
+      fetchRaidStructure()
     } catch (err) {
       showFeedback(ID, '초기화 실패', 'error')
     } finally {
@@ -49,66 +72,29 @@ export default function AdminPage() {
     }
   }
 
-  const addKamenGate3Phase = async () => {
-    const ID = 'gate3'
+  /* Factory Reset */
+  const factoryResetRaid = async () => {
+    if (!window.confirm('정말로 공장 초기화를 진행하시겠습니까?\n저장된 스냅샷이 영구적으로 삭제되며, 초기 공략 데이터로 돌아갑니다.')) return
+
+    const ID = 'factory'
     try {
       setLoading(true)
-      setFeedback(null)
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/add-guides`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/factory-reset`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          boss: '카멘',
-          difficulties: ['노말', '하드'],
-          gates: [1, 2, 3],
-          reset: true,
-        }),
       })
-
       if (!res.ok) throw new Error('요청 실패')
-
+      
       const data = await res.json()
-      showFeedback(ID, `Phase ${data.inserted}개 생성 완료 (3관문)`)
+      showFeedback(ID, data.message || '공장 초기화 완료')
+      fetchRaidStructure()
     } catch (err) {
-      showFeedback(ID, 'Phase 생성 실패', 'error')
+      showFeedback(ID, '공장 초기화 실패', 'error')
     } finally {
       setLoading(false)
     }
   }
 
-  const addKamenGate1Phase = async () => {
-    const ID = 'gate1'
-    try {
-      setLoading(true)
-      setFeedback(null)
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/add-guides`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          boss: '카멘',
-          difficulties: ['노말'],
-          gates: [1],
-          reset: true,
-          maxLine: 100, // 테스트용 100줄
-        }),
-      })
-
-      if (!res.ok) throw new Error('요청 실패')
-
-      const data = await res.json()
-      showFeedback(ID, `Phase ${data.inserted}개 생성 완료 (1관문)`)
-    } catch (err) {
-      showFeedback(ID, 'Phase 생성 실패', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // 공통 결과 UI 렌더러
   const renderFeedback = (id: string) => {
@@ -137,39 +123,40 @@ export default function AdminPage() {
   const [guideList, setGuideList] = useState<any[]>([])
   
   const [editingId, setEditingId] = useState<string | null>(null)
+  // Form State
   const [formData, setFormData] = useState({
      line: '',
      phase: '',
      hint: '',
-     imageUrl: ''
   })
 
   // 1. 초기 레이드 구조 Fetch
-  useEffect(() => {
-    const fetchRaidStructure = async () => {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids`)
-            const data = await res.json()
-            setRaidStructure(data)
+  const fetchRaidStructure = async () => {
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids`)
+        const data = await res.json()
+        setRaidStructure(data)
+        
+        // 초기값 설정 (첫번째 레이드 자동 선택)
+        if (data.length > 0 && !guideBoss) {
+            const firstBoss = data[0]
+            setGuideBoss(firstBoss.name)
             
-            // 초기값 설정 (첫번째 레이드 자동 선택)
-            if (data.length > 0) {
-                const firstBoss = data[0]
-                setGuideBoss(firstBoss.name)
+            if (firstBoss.difficulties.length > 0) {
+                const firstDiff = firstBoss.difficulties[0]
+                setGuideDiff(firstDiff.name)
                 
-                if (firstBoss.difficulties.length > 0) {
-                    const firstDiff = firstBoss.difficulties[0]
-                    setGuideDiff(firstDiff.name)
-                    
-                    if (firstDiff.gates.length > 0) {
-                        setGuideGate(`${firstDiff.gates[0].name}관문`.replace('관문관문', '관문')) // 이름 보정
-                    }
+                if (firstDiff.gates.length > 0) {
+                    setGuideGate(`${firstDiff.gates[0].name}관문`.replace('관문관문', '관문')) // 이름 보정
                 }
             }
-        } catch (e) {
-            console.error('Failed to fetch raid structure', e)
         }
+    } catch (e) {
+        console.error('Failed to fetch raid structure', e)
     }
+  }
+
+  useEffect(() => {
     fetchRaidStructure()
   }, [])
 
@@ -263,7 +250,7 @@ export default function AdminPage() {
           if (!res.ok) throw new Error('저장 실패')
 
           showFeedback('guide-save', editingId ? '수정 완료' : '생성 완료')
-          setFormData({ line: '', phase: '', hint: '', imageUrl: '' })
+          setFormData({ line: '', phase: '', hint: '' })
           setEditingId(null)
           fetchGuides()
       } catch (e) {
@@ -288,13 +275,12 @@ export default function AdminPage() {
           line: guide.line,
           phase: guide.phase,
           hint: guide.hint,
-          imageUrl: guide.imageUrl || ''
       })
   }
   
   const cancelEdit = () => {
       setEditingId(null)
-      setFormData({ line: '', phase: '', hint: '', imageUrl: '' })
+      setFormData({ line: '', phase: '', hint: '' })
   }
 
   return (
@@ -302,7 +288,7 @@ export default function AdminPage() {
       {/* Top Bar */}
       <header className="h-14 px-6 flex items-center border-b border-white/10 bg-[#0f111a]/80 backdrop-blur">
         <h1 className="font-bold text-lg">LOA Doctor Admin</h1>
-        <span className="ml-3 text-[10px] text-slate-500 font-mono">DEV MODE</span>
+        <span className="ml-3 text-[10px] text-slate-500">DEV MODE</span>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -323,9 +309,9 @@ export default function AdminPage() {
           </button>
 
           <button onClick={() => setActiveMenu('gate')} className={menuClass('gate')}>
-            관문 관리 (미구현)
+            관문 관리 (maxLines)
           </button>
-
+          
           <button onClick={() => setActiveMenu('phase')} className={menuClass('phase')}>
             Phase 가이드 관리
           </button>
@@ -339,51 +325,143 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {/* Card */}
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
-                <h3 className="font-semibold text-sm">전체 레이드 초기화</h3>
+                <h3 className="font-semibold text-sm">전체 레이드 초기화 (기초값 복원)</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  모든 레이드 기초 값으로 다시 생성
+                  저장된 기초값(Snapshot)이 있다면 그 상태로 복구하고,<br/>
+                  없다면 완전 초기 상태(Factory Default)로 로드합니다.
                 </p>
-                <button
-                  onClick={resetRaid}
-                  disabled={loading}
-                  className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 font-bold text-sm transition-all"
-                >
-                  {loading ? '초기화 중...' : '레이드 초기화 실행'}
-                </button>
-                {renderFeedback('reset')}
-              </div>
+                <div className="flex flex-col gap-2">
+                    <button
+                      onClick={saveSnapshot}
+                      disabled={loading}
+                      className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 font-bold text-sm transition-all"
+                    >
+                      {loading ? '처리 중...' : '현재 상태를 기초값으로 저장 (Snapshot)'}
+                    </button>
+                    {renderFeedback('snapshot')}
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
-                <h3 className="font-semibold text-sm">카멘 3관문 Phase 자동 생성</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  카멘 3관문 줄 수 기반 Phase 가이드 (1000 → 10줄)
-                </p>
-                <button
-                  onClick={addKamenGate3Phase}
-                  disabled={loading}
-                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 font-bold text-sm transition-all"
-                >
-                  {loading ? 'Phase 생성 중...' : '카멘 3관문 Phase 생성'}
-                </button>
-                {renderFeedback('gate3')}
-              </div>
+                    <button
+                      onClick={resetRaid}
+                      disabled={loading}
+                      className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 font-bold text-sm transition-all"
+                    >
+                      {loading ? '초기화 중...' : '기초값으로 복원 (Reset)'}
+                    </button>
+                    {renderFeedback('reset')}
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
-                <h3 className="font-semibold text-sm">카멘 1관문(테스트) Phase 생성</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                   카멘 1관문 테스트용 가이드 생성 (100줄)
-                </p>
-                <button
-                  onClick={addKamenGate1Phase}
-                  disabled={loading}
-                  className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 font-bold text-sm transition-all"
-                >
-                  {loading ? 'Phase 생성 중...' : '카멘 1관문 생성'}
-                </button>
-                {renderFeedback('gate1')}
+                    <div className="h-px bg-white/10 my-2" />
+
+                    <button
+                      onClick={factoryResetRaid}
+                      disabled={loading}
+                      className="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-red-400 disabled:opacity-50 font-bold text-xs transition-all border border-red-500/30"
+                    >
+                      {loading ? '삭제 중...' : '공장 초기화 (Factory Reset)'}
+                    </button>
+                    {renderFeedback('factory')}
+                </div>
               </div>
             </div>
             </>
+        )}
+
+        {/* Gate Management UI */}
+        {activeMenu === 'gate' && (
+            <div className="space-y-6">
+                <h2 className="text-xl font-bold">관문 관리 (Max Lines)</h2>
+                
+                <div className="flex gap-4">
+                     <select 
+                         value={guideBoss} 
+                         onChange={e=>handleBossChange(e.target.value)} 
+                         className="bg-black/40 border border-white/10 rounded px-3 py-2 text-xs min-w-[150px]"
+                     >
+                         {raidStructure.map(r => (
+                             <option key={r.name} value={r.name}>{r.name}</option>
+                         ))}
+                     </select>
+
+                     <select 
+                         value={guideDiff} 
+                         onChange={e=>handleDiffChange(e.target.value)} 
+                         className="bg-black/40 border border-white/10 rounded px-3 py-2 text-xs min-w-[150px]"
+                     >
+                         {getDifficulties().map((d: any) => (
+                             <option key={d.name} value={d.name}>{d.name}</option>
+                         ))}
+                     </select>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+                    <table className="w-full text-sm text-left">
+                        <thead className="text-xs text-slate-500 uppercase bg-black/20">
+                            <tr>
+                                <th className="px-6 py-3">관문명</th>
+                                <th className="px-6 py-3">현재 설정된 Max Lines</th>
+                                <th className="px-6 py-3 text-right">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {getGates().map((gate: any) => (
+                                <tr key={gate._id || gate.name} className="hover:bg-white/5">
+                                    <td className="px-6 py-4 font-bold">{gate.name}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-blue-400 text-lg">{gate.maxLines}</span>
+                                            <span className="text-slate-500 text-xs">줄</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <input 
+                                                type="number" 
+                                                className="w-20 bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-center"
+                                                defaultValue={gate.maxLines}
+                                                id={`input-${gate._id}`}
+                                            />
+                                            <button 
+                                                onClick={async () => {
+                                                    if (!gate._id) return alert('Gate ID가 없습니다. 새로고침 해주세요.')
+                                                    const input = document.getElementById(`input-${gate._id}`) as HTMLInputElement
+                                                    const newVal = input.value
+                                                    try {
+                                                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/gate/${gate._id}`, {
+                                                            method: 'PUT',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ maxLines: newVal })
+                                                        })
+                                                        if(!res.ok) throw new Error()
+                                                        showFeedback(`gate-${gate._id}`, '수정 완료')
+                                                        
+                                                        // Refresh Data
+                                                        const res2 = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids`)
+                                                        const data = await res2.json()
+                                                        setRaidStructure(data)
+
+                                                    } catch(e) {
+                                                        showFeedback(`gate-${gate._id}`, '수정 실패', 'error')
+                                                    }
+                                                }}
+                                                className="px-3 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded text-xs transition-colors"
+                                            >
+                                                저장
+                                            </button>
+                                        </div>
+                                        {renderFeedback(`gate-${gate._id}`)}
+                                    </td>
+                                </tr>
+                            ))}
+                            {getGates().length === 0 && (
+                                <tr>
+                                    <td colSpan={3} className="px-6 py-8 text-center text-slate-500">
+                                        등록된 관문이 없습니다.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         )}
 
         {activeMenu === 'phase' && (
@@ -451,14 +529,6 @@ export default function AdminPage() {
                                       className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-sm h-24 resize-none" 
                                />
                            </div>
-                           <div className="space-y-2">
-                               <label className="text-xs text-slate-500">이미지 URL (Optional)</label>
-                               <input 
-                                      value={formData.imageUrl} 
-                                      onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                                      className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-sm" 
-                               />
-                           </div>
 
                            <div className="flex gap-2 pt-2">
                                <button onClick={handleSaveGuide} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-bold">
@@ -496,9 +566,7 @@ export default function AdminPage() {
                                 <div className="flex-1 min-w-0">
                                     <h4 className="font-bold text-slate-200 mb-1">{guide.phase}</h4>
                                     <p className="text-xs text-slate-400 leading-relaxed">{guide.hint}</p>
-                                    {guide.imageUrl && (
-                                        <div className="mt-2 text-[10px] text-blue-400 truncate">{guide.imageUrl}</div>
-                                    )}
+
                                 </div>
                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => handleEdit(guide)} className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-xs text-slate-300">수정</button>

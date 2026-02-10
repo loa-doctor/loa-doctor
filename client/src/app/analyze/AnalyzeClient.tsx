@@ -30,7 +30,7 @@ class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean,
       return (
         <div className="p-4 bg-red-900/90 text-red-200 text-xs h-screen overflow-auto">
             <h3 className="font-bold mb-2">Overlay Error</h3>
-            <pre className="whitespace-pre-wrap font-mono">{this.state.error?.toString()}</pre>
+            <pre className="whitespace-pre-wrap">{this.state.error?.toString()}</pre>
         </div>
       )
     }
@@ -162,24 +162,6 @@ const OverlayContent = ({
                 <p className="text-[13px] text-slate-300 leading-snug break-keep whitespace-pre-wrap">
                     {guide.hint}
                 </p>
-                {/* Guide Image Display - Only for ACTIVE */}
-                {type === 'ACTIVE' && guide.imageUrl && (
-                    <div className="mt-2 rounded-lg overflow-hidden border border-white/10 bg-black/50">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                            src={getFullUrl(guide.imageUrl)} 
-                            alt="Guide Visual" 
-                            className="w-full h-auto object-contain max-h-[200px]"
-                            onError={(e) => {
-                                e.currentTarget.style.display = 'none' 
-                                if (e.currentTarget.parentElement) {
-                                    e.currentTarget.parentElement.innerText = '이미지 로드 실패'
-                                    e.currentTarget.parentElement.className = "mt-2 p-2 text-[10px] text-red-500 bg-red-500/10 rounded border border-red-500/20 text-center"
-                                }
-                            }} 
-                        />
-                    </div>
-                )}
             </div>
         )
     }
@@ -191,7 +173,7 @@ const OverlayContent = ({
 
     return (
         <ErrorBoundary>
-            <div ref={rootRef} className={`flex flex-col w-full bg-[#0a0a0c] text-[#e2e8f0] font-sans select-none overflow-hidden box-border ${isCollapsed ? 'h-auto' : 'h-screen'}`}>
+            <div ref={rootRef} className={`flex flex-col w-full bg-[#0a0a0c] text-[#e2e8f0] select-none overflow-hidden box-border ${isCollapsed ? 'h-auto' : 'h-screen'}`}>
            {/* Header */}
            <div className="flex items-center justify-between px-5 py-3 bg-[#141417] border-b border-white/5 h-[48px] shrink-0 box-border relative z-20">
               <div className="flex items-center gap-3">
@@ -260,7 +242,7 @@ const OverlayContent = ({
                             </div>
                             <div className="flex flex-col gap-0.5">
                                 <span className="text-blue-500 font-black text-base leading-none tracking-wider">SEARCHING...</span>
-                                <div className="text-slate-400 text-[10px] font-mono">
+                                <div className="text-slate-400 text-[10px]">
                                     Looking for "x [Number]" pattern...
                                 </div>
                             </div>
@@ -442,9 +424,9 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   const [isDebugOverlay, setIsDebugOverlay] = useState(false) // Whether current session is debug mode
 
   // Initialization fixed to prevent Hydration Error
-  const [selectedRaid, setSelectedRaid] = useState(raids.length > 0 ? raids[0].name : '카멘')
-  const [selectedDifficulty, setSelectedDifficulty] = useState('하드')
-  const [selectedGate, setSelectedGate] = useState('3관문')
+  const [selectedRaid, setSelectedRaid] = useState(raids.length > 0 ? raids[0].name : '1막 : 대지를 부수는 업화의 궤적')
+  const [selectedDifficulty, setSelectedDifficulty] = useState('노말')
+  const [selectedGate, setSelectedGate] = useState('1관문')
 
   // Load from localStorage after mount
   useEffect(() => {
@@ -454,7 +436,12 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
       const savedDiff = localStorage.getItem('loa-doctor:selectedDifficulty')
       const savedGate = localStorage.getItem('loa-doctor:selectedGate')
 
-      if (savedRaid && raids.some(r => r.name === savedRaid)) setSelectedRaid(savedRaid)
+      if (savedRaid && raids.some(r => r.name === savedRaid)) {
+          setSelectedRaid(savedRaid)
+          // Sync category
+          const r = raids.find(r => r.name === savedRaid)
+          if (r) setSelectedCategory(r.category || '기타')
+      }
       if (savedDiff) setSelectedDifficulty(savedDiff)
       if (savedGate) setSelectedGate(savedGate)
   }, [raids])
@@ -473,6 +460,29 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   }, [selectedGate])
 
   const [phaseGuides, setPhaseGuides] = useState<PhaseGuide[]>([])
+
+  /* Derived State: Categories & Filtered Raids */
+  const categories = useMemo(() => {
+    const cats = new Set(raids.map(r => r.category || '기타'))
+    return Array.from(cats)
+  }, [raids])
+
+  const [selectedCategory, setSelectedCategory] = useState<string>('카제로스 레이드')
+
+  // Available raids based on category
+  const availableRaids = useMemo(() => {
+    return raids.filter(r => (r.category || '기타') === selectedCategory)
+  }, [raids, selectedCategory])
+  
+  // Auto-select first raid when category changes
+  useEffect(() => {
+      if (availableRaids.length > 0) {
+          const currentRaidObj = availableRaids.find(r => r.name === selectedRaid)
+          if (!currentRaidObj) {
+              setSelectedRaid(availableRaids[0].name)
+          }
+      }
+  }, [selectedCategory, availableRaids, selectedRaid])
 
   /* Logic Update: Determine maxLines based on selection */
   const selectedMaxLines = useMemo(() => {
@@ -507,6 +517,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   }, [onLineDetectedOriginal, analysisMode])
 
   useEffect(() => {
+    if (!selectedGate) return
     const gateNumber = Number(selectedGate.replace(/[^0-9]/g, ''))
     
     // Cache Key (Version 2)
@@ -548,14 +559,6 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
         if (typeof window !== 'undefined') {
             localStorage.setItem(cacheKey, JSON.stringify(sorted))
         }
-
-        // Preload Images
-        sorted.forEach((g: any) => {
-             if (g.imageUrl) {
-                 const img = new Image()
-                 img.src = g.imageUrl
-             }
-        })
       })
       .catch(err => {
           console.error("Fetch error:", err)
@@ -713,17 +716,30 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                 </div>
               </div>
               <div className="space-y-4">
-                <select
-                  value={selectedRaid}
-                  onChange={e => setSelectedRaid(e.target.value)}
-                  className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold"
-                >
-                  {raids.map(r => (
-                    <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
+                  {/* Category Selector */}
+                  <select
+                    value={selectedCategory}
+                    onChange={e => setSelectedCategory(e.target.value)}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold"
+                  >
+                     {categories.map(cat => (
+                         <option key={cat} value={cat} className="bg-[#141417] text-[#e2e8f0]">
+                             {cat}
+                         </option>
+                     ))}
+                  </select>
+
+                  <select
+                    value={selectedRaid}
+                    onChange={e => setSelectedRaid(e.target.value)}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold"
+                  >
+                    {availableRaids.map(r => (
+                        <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">
+                            {r.name}
+                        </option>
+                    ))}
+                  </select>
                 <div className="grid grid-cols-2 gap-3">
                   <select
                     value={selectedDifficulty}
