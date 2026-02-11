@@ -36,7 +36,6 @@
 - **State Management**: React Hooks (Custom Hooks for heavy logic)
 - **Core Libs**:
   - `tesseract.js`: Browser-based OCR
-  - `opencv.js`: Image Processing
   - `framer-motion`: UI Animations
 
 ### Backend (`/server`)
