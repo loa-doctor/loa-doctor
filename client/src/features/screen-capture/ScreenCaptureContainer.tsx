@@ -9,7 +9,7 @@ import { type RectTuning } from './utils/rect'
 import { STORAGE_KEYS } from './utils/storageKeys'
 import { useOCRLoop } from './hooks/useOCRLoop'
 import { useBossLineSearching } from './hooks/useBossLineSearching'
-import { useOpenCV } from '../../hooks/useOpenCV'
+
 
 export type ScreenCaptureHandle = {
   startCapture: () => Promise<boolean>
@@ -35,7 +35,7 @@ export const ScreenCaptureContainer = forwardRef<
   const { start, stop } = useScreenShare(videoRef)
   const calibration = useAspectCalibration(videoRef)
   const { lineText, recognize, stop: stopOCR } = useTesseractOCR()
-  const { cv, loaded: cvLoaded } = useOpenCV()
+
 
   useImperativeHandle(ref, () => ({
     async startCapture() {
