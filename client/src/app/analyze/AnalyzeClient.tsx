@@ -128,7 +128,7 @@ const OverlayContent = ({
     }, [targetWindow, isSelectionMode, activeGuide, upcomingGuide]) 
 
 
-    const [isCollapsed, setIsCollapsed] = useState(false)
+
 
     // Helper Render
     // Helper Render
@@ -173,30 +173,16 @@ const OverlayContent = ({
 
     return (
         <ErrorBoundary>
-            <div ref={rootRef} className={`flex flex-col w-full bg-[#0a0a0c] text-[#e2e8f0] select-none overflow-hidden box-border ${isCollapsed ? 'h-auto' : 'h-screen'}`}>
+            <div ref={rootRef} className="flex flex-col w-full bg-[#0a0a0c] text-[#e2e8f0] select-none overflow-hidden box-border h-screen">
            {/* Header */}
            <div className="flex items-center justify-between px-5 py-3 bg-[#141417] border-b border-white/5 h-[48px] shrink-0 box-border relative z-20">
               <div className="flex items-center gap-3">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">RAID MONITOR</span>
-                    <span className="text-[13px] font-bold text-white/90">{selectedRaid} {selectedGate}</span>
+                    <span className="text-[13px] font-bold text-white/90">{selectedRaid.split(':')[0].trim()} {selectedGate}</span>
                   </div>
                   {/* Collapse Toggle */}
-                  <button 
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="p-1 hover:bg-white/10 rounded text-slate-500 hover:text-white transition-colors"
-                    title={isCollapsed ? "Expand" : "Collapse"}
-                  >
-                    {isCollapsed ? (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
-                        </svg>
-                    ) : (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                    )}
-                  </button>
+
               </div>
               
               <div className="flex gap-4">
@@ -216,7 +202,7 @@ const OverlayContent = ({
               </div>
            </div>
 
-           {!isCollapsed && (
+
                <>
                    {/* Visual HP Bar */}
                    <div className="w-full h-3 bg-white/5 relative shrink-0">
@@ -266,7 +252,7 @@ const OverlayContent = ({
                                    }}
                                    className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
                                >
-                                   {raids.map((r: any) => <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">{r.name}</option>)}
+                                   {raids.map((r: any) => <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">{r.name.split(':')[0].trim()}</option>)}
                                </select>
                                <select 
                                    value={tempDiff} 
@@ -354,7 +340,7 @@ const OverlayContent = ({
                        )}
                    </div>
                </>
-           )}
+
         </div>
     </ErrorBoundary>
     )
@@ -798,16 +784,17 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
                         </button>
                     </div>
                 )}
-                
                 {!isCapturing ? (
                     <button
                         onClick={async () => {
                           try {
-                            await captureRef.current?.startCapture()
-                            setIsCapturing(true)
-                            setIsDebugOverlay(false) // Normal Mode
-                            // handleStartAnalysis() // Removed to allow manual start from Overlay
-                            openGuidePip()
+                            const success = await captureRef.current?.startCapture()
+                            if (success) {
+                                setIsCapturing(true)
+                                setIsDebugOverlay(false) // Normal Mode
+                                // handleStartAnalysis() // Removed to allow manual start from Overlay
+                                openGuidePip()
+                            }
                           } catch (e) {
                               console.error(e)
                           }

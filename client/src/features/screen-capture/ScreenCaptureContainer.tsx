@@ -12,7 +12,7 @@ import { useBossLineSearching } from './hooks/useBossLineSearching'
 import { useOpenCV } from '../../hooks/useOpenCV'
 
 export type ScreenCaptureHandle = {
-  startCapture: () => void
+  startCapture: () => Promise<boolean>
   stopCapture: () => void
   startAlgorithm: () => void
   getPhase: () => 'IDLE' | 'SETTING' | 'SEARCHING' | 'LOCKED'
@@ -38,8 +38,9 @@ export const ScreenCaptureContainer = forwardRef<
   const { cv, loaded: cvLoaded } = useOpenCV()
 
   useImperativeHandle(ref, () => ({
-    startCapture() {
-      start()
+    async startCapture() {
+      const success = await start()
+      return success
       // calibration.startSetting() // Wait for explicit start
     },
     startAlgorithm() {

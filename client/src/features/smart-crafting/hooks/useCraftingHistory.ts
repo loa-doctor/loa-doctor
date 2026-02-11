@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { CraftingEntry, COSTS, MaterialType } from '../constants/gameData';
+import { useState, useCallback, useEffect } from 'react';
+import { CraftingEntry, COSTS, MaterialType, BASE_DURATIONS } from '../constants/gameData';
 import { MarketPrices, BundleCounts } from './useMarketPrices';
 
 interface UseCraftingHistoryProps {
@@ -16,6 +16,29 @@ interface UseCraftingHistoryProps {
 
 export function useCraftingHistory(initialHistory: CraftingEntry[] = []) {
     const [history, setHistory] = useState<CraftingEntry[]>(initialHistory);
+
+    // One-time migration for corrupted duration data (test mode artifacts)
+    useEffect(() => {
+        if (history.length === 0) return;
+
+        const needsFix = history.some(entry => entry.duration && entry.duration < 100);
+        if (!needsFix) return;
+
+        setHistory(prev => prev.map(entry => {
+            if (entry.duration && entry.duration < 100) {
+                 // The old test code was: baseTimeSec = (abidos? 1 : 2)
+                 // Stored Duration = Rounds * TestBase * Multiplier
+                 // True Duration = Rounds * RealBase * Multiplier
+                 // Ratio = RealBase / TestBase
+                 
+                 const ratio = entry.type === 'abidos' ? 3600 : 2250; // 3600/1 or 4500/2
+                 const correctedDuration = entry.duration * ratio;
+                 
+                 return { ...entry, duration: correctedDuration };
+            }
+            return entry;
+        }));
+    }, [history]);
 
     const saveHistory = useCallback((
         activeTab: MaterialType,
@@ -151,6 +174,14 @@ export function useCraftingHistory(initialHistory: CraftingEntry[] = []) {
         alert(`[기록 완료] 실제 결과 ${actualCount}개가 저장되었습니다.`);
     }, []);
 
+    const updateLatestEntryDuration = useCallback((duration: number) => {
+        setHistory(prev => {
+            if (prev.length === 0) return prev;
+            const updated = { ...prev[0], duration };
+            return [updated, ...prev.slice(1)];
+        });
+    }, []);
+
     return {
         history,
         setHistory,
@@ -158,6 +189,7 @@ export function useCraftingHistory(initialHistory: CraftingEntry[] = []) {
         deleteHistory,
         clearHistory,
         updateHistoryEntry,
-        handleRecordResult
+        handleRecordResult,
+        updateLatestEntryDuration
     };
 }

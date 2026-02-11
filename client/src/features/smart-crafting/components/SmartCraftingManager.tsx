@@ -81,7 +81,7 @@ export default function SmartCraftingManager() {
   // Custom Hooks
   const { pipWindow, openPip } = usePipWindow();
   
-  const { history, setHistory, updateHistoryEntry, deleteHistory, clearHistory, saveHistory, handleRecordResult } = useCraftingHistory([]);
+  const { history, setHistory, updateHistoryEntry, deleteHistory, clearHistory, saveHistory, handleRecordResult, updateLatestEntryDuration } = useCraftingHistory([]);
 
   const { craftingState, startCrafting, cancelCrafting, setCraftingState } = useCraftingTimer(addLog);
 
@@ -294,7 +294,7 @@ export default function SmartCraftingManager() {
      // Calculate total duration for history
      const isNinav = ninavBlessing;
      const currentConcurrency = isNinav ? 4 : 3;
-     const baseTimeSec = activeTab === 'abidos' ? 1 : 2; // TEST MODE: 1s / 2s
+     const baseTimeSec = BASE_DURATIONS[activeTab];
      const totalReduction = (timeReduction || 0) + (isNinav ? 10 : 0);
      const timeMultiplier = Math.max(0, 1 - (totalReduction / 100));
      const batchTimeSec = baseTimeSec * timeMultiplier;
@@ -323,6 +323,36 @@ export default function SmartCraftingManager() {
      );
   };
 
+  // [Temporary Fix] Force update latest history duration based on current settings
+  // because previous data migration might have rounded the duration incorrectly.
+  useEffect(() => {
+    if (history.length === 0) return;
+    
+    // Calculate what the duration SHOULD be with current settings
+    const isNinav = ninavBlessing;
+    const currentConcurrency = isNinav ? 4 : 3;
+    const baseTimeSec = BASE_DURATIONS[activeTab];
+    const totalReduction = (timeReduction || 0) + (isNinav ? 10 : 0);
+    const timeMultiplier = Math.max(0, 1 - (totalReduction / 100));
+    const batchTimeSec = baseTimeSec * timeMultiplier;
+    const totalRounds = Math.ceil(targetSlots / currentConcurrency);
+    
+    const correctDuration = totalRounds * batchTimeSec;
+    const latestDuration = history[0].duration || 0;
+
+    // Apply fix if different (with small tolerance for float)
+    if (Math.abs(latestDuration - correctDuration) > 1) {
+        // console.log("Fixing duration:", latestDuration, "->", correctDuration);
+        (window as any).fixLatestDuration = () => {
+             // Accessing the exposed function from useCraftingHistory
+             // But we need to call the method from the hook returned object.
+             // Since we are inside the component using the hook, we can call it directly.
+             updateLatestEntryDuration(correctDuration);
+             alert(`최신 기록의 제작 시간을 ${latestDuration.toFixed(1)}초에서 ${correctDuration.toFixed(1)}초로 수정했습니다.`);
+        };
+    }
+  }, [history, activeTab, targetSlots, ninavBlessing, timeReduction, updateLatestEntryDuration]);
+
   const isConfigured = !!apiKey && costReduction !== null && greatSuccessChance !== null && timeReduction !== null && !apiError;
   const isFullyReady = hasEntered && isPriceLoaded;
 
@@ -345,19 +375,19 @@ export default function SmartCraftingManager() {
   const bonusClass = `fixed z-[60] flex flex-col transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] ${
       hasEntered 
       ? 'top-20 left-6 scale-100 items-start translate-x-0 translate-y-0' 
-      : 'top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-1/2 md:left-auto md:right-[calc(50%+16px)] md:translate-x-0 md:-translate-y-1/2 scale-95 items-center md:items-end'
+      : 'top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-[55%] md:left-auto md:right-[calc(50%+16px)] md:translate-x-0 md:-translate-y-1/2 scale-95 items-center md:items-end'
   }`;
 
   const apiClass = `fixed z-50 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] ${
       hasEntered 
       ? 'top-20 right-6 scale-100 items-end translate-x-0 translate-y-0' 
-      : 'top-[65%] left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-1/2 md:left-[calc(50%+16px)] md:translate-x-0 md:-translate-y-1/2 scale-95 items-center md:items-start'
+      : 'top-[80%] left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-[55%] md:left-[calc(50%+16px)] md:translate-x-0 md:-translate-y-1/2 scale-95 items-center md:items-start'
   }`;
 
   const titleClass = `fixed left-1/2 -translate-x-1/2 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] z-50 flex flex-col items-center whitespace-nowrap pointer-events-none ${
       hasEntered
       ? 'top-20 scale-100 opacity-100'
-      : 'top-[15%] md:top-[12%] scale-100 opacity-100'
+      : 'top-[6%] md:top-[12%] scale-100 opacity-100'
   }`;
 
   return (
@@ -370,7 +400,7 @@ export default function SmartCraftingManager() {
                 : 'none' 
           }}
       >
-          <div className="absolute top-[15%] md:top-[20%] text-center space-y-3 px-4 pt-16 w-full">
+          <div className="absolute top-[14%] md:top-[22%] text-center space-y-3 px-4 w-full">
               <p className={`text-slate-300 text-lg md:text-xl font-medium transition-all duration-500 delay-200 ${isConfigured ? 'opacity-0 -translate-y-4' : 'opacity-100 translate-y-0'}`}>
                   정확한 이득 계산을 위해 <span className="text-[var(--color-primary)] font-bold text-xl md:text-2xl decoration-wavy underline decoration-[var(--color-primary)]/30 underline-offset-4">API Key</span>와 <span className="text-[var(--color-primary)] font-bold text-xl md:text-2xl decoration-wavy underline decoration-[var(--color-primary)]/30 underline-offset-4">제작 보너스</span>를 설정해주세요.
               </p>
