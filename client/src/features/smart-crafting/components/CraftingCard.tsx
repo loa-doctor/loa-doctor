@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { MarketPrices, BundleCounts } from '../hooks/useMarketPrices';
 
 interface CraftingCardProps {
   type: 'abidos' | 'superior';
@@ -16,6 +17,9 @@ interface CraftingCardProps {
   hourlyUsageRevenuePerItemSnapshot?: number;
   onRecordResult?: (count: number) => void;
   expectedOutput?: number;
+  currentPrices?: MarketPrices;
+  currentBundleCounts?: BundleCounts;
+  timeCoef?: number;
 }
 
 import { calculateProfit } from '../utils/profitCalculator';
@@ -35,7 +39,10 @@ export default function CraftingCard({
   hourlySellingRevenuePerItemSnapshot,
   hourlyUsageRevenuePerItemSnapshot,
   onRecordResult,
-  expectedOutput
+  expectedOutput,
+  currentPrices,
+  currentBundleCounts,
+  timeCoef
 }: CraftingCardProps) {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [producedItems, setProducedItems] = useState<number>(0);
@@ -56,9 +63,15 @@ export default function CraftingCard({
         actualOutput, 
         hourlySellingRevenuePerItemSnapshot, 
         hourlyCostSnapshot, 
-        hourlySellingProfit
+        hourlySellingProfit,
+        currentPrices,
+        currentBundleCounts,
+        timeCoef,
+        type,
+        expectedOutput,
+        false // isUsage
     );
-  }, [isComplete, actualOutput, hourlySellingRevenuePerItemSnapshot, hourlyCostSnapshot, hourlySellingProfit]);
+  }, [isComplete, actualOutput, hourlySellingRevenuePerItemSnapshot, hourlyCostSnapshot, hourlySellingProfit, currentPrices, currentBundleCounts, timeCoef, type, expectedOutput]);
 
   const displayedUsageProfit = React.useMemo(() => {
     return calculateProfit(
@@ -66,9 +79,15 @@ export default function CraftingCard({
         actualOutput, 
         hourlyUsageRevenuePerItemSnapshot, 
         hourlyCostSnapshot, 
-        hourlyUsageProfit
+        hourlyUsageProfit,
+        currentPrices,
+        currentBundleCounts,
+        timeCoef,
+        type,
+        expectedOutput,
+        true // isUsage
     );
-  }, [isComplete, actualOutput, hourlyUsageRevenuePerItemSnapshot, hourlyCostSnapshot, hourlyUsageProfit]);
+  }, [isComplete, actualOutput, hourlyUsageRevenuePerItemSnapshot, hourlyCostSnapshot, hourlyUsageProfit, currentPrices, currentBundleCounts, timeCoef, type, expectedOutput]);
 
   useEffect(() => {
     if (isComplete && !actualOutput) {

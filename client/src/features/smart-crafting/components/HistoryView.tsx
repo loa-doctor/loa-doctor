@@ -2,15 +2,18 @@ import React, { useState, useMemo } from 'react';
 // Reading file first to be safe.
 
 import { CraftingEntry } from '../constants/gameData';
+import { MarketPrices, BundleCounts } from '../hooks/useMarketPrices';
 
 interface HistoryViewProps {
   history: CraftingEntry[];
   onDelete: (id: string) => void;
   onClear?: () => void;
   onUpdateEntry?: (id: string, actualCount: number) => void;
+  currentPrices?: MarketPrices;
+  currentBundleCounts?: BundleCounts;
 }
 
-export default function HistoryView({ history, onDelete, onClear, onUpdateEntry }: HistoryViewProps) {
+export default function HistoryView({ history, onDelete, onClear, onUpdateEntry, currentPrices, currentBundleCounts }: HistoryViewProps) {
   const formatDuration = (secondsInput: number) => {
     const totalSeconds = Math.round(secondsInput);
     const hours = Math.floor(totalSeconds / 3600);
@@ -81,18 +84,22 @@ export default function HistoryView({ history, onDelete, onClear, onUpdateEntry 
 
   const stats = useMemo(() => {
     return filteredHistory.reduce((acc, entry) => {
-        const profit = viewMode === 'selling' 
-            ? (entry.actualProfit ?? entry.expectedProfit ?? 0)
-            : ((entry.actualRevenue ?? entry.expectedRevenue) - entry.totalCost); // Usage Profit
-        
-        // Calculate Usage Profit on the fly if not present
+        // Real-time Profit Calculation
         const count = entry.outputs.actualCount ?? entry.outputs.expectedCount;
-        const grossRevenue = count * entry.outputs.marketPrice;
-        const usageProfit = grossRevenue - entry.totalCost;
+        
+        // Determine Market Price (Real-time or Snapshot)
+        let unitPrice = entry.outputs.marketPrice; // Default to snapshot
+        if (currentPrices && currentBundleCounts && entry.type) {
+             const key = entry.type === 'abidos' ? 'fusion' : 'superiorFusion';
+             const bundle = currentBundleCounts[key] || 1;
+             if (currentPrices[key] > 0) {
+                 unitPrice = currentPrices[key] / bundle;
+             }
+        }
 
-        const currentProfit = viewMode === 'selling' 
-            ? (entry.actualProfit ?? entry.expectedProfit ?? 0)
-            : usageProfit;
+        const realizedPrice = unitPrice * (viewMode === 'selling' ? 0.95 : 1.0);
+        const grossRevenue = count * realizedPrice;
+        const currentProfit = grossRevenue - entry.totalCost;
 
         // Accumulate valid duration/profit for hourly rate
         let durationAdd = 0;
@@ -108,7 +115,7 @@ export default function HistoryView({ history, onDelete, onClear, onUpdateEntry 
             hourlyProfitAccumulator: acc.hourlyProfitAccumulator + profitAdd
         };
     }, { totalProfit: 0, hourlyDurationAccumulator: 0, hourlyProfitAccumulator: 0 });
-  }, [filteredHistory, viewMode]);
+  }, [filteredHistory, viewMode, currentPrices, currentBundleCounts]);
 
   const hourlyProfit = stats.hourlyDurationAccumulator > 0 
     ? (stats.hourlyProfitAccumulator / stats.hourlyDurationAccumulator) * 3600 
@@ -252,14 +259,21 @@ export default function HistoryView({ history, onDelete, onClear, onUpdateEntry 
                               if (!entry.inputs || !entry.outputs) return null;
 
                               const count = entry.outputs.actualCount ?? entry.outputs.expectedCount;
-                              const grossRevenue = count * entry.outputs.marketPrice;
-                              const revenue = viewMode === 'selling' 
-                                ? (entry.actualRevenue ?? entry.expectedRevenue) 
-                                : grossRevenue; // Usage Value (No tax)
+                              const unitPrice = (() => {
+                                  let price = entry.outputs.marketPrice;
+                                  if (currentPrices && currentBundleCounts && entry.type) {
+                                      const key = entry.type === 'abidos' ? 'fusion' : 'superiorFusion';
+                                      const bundle = currentBundleCounts[key] || 1;
+                                      if (currentPrices[key] > 0) {
+                                          price = currentPrices[key] / bundle;
+                                      }
+                                  }
+                                  return price;
+                              })();
 
-                              const profit = viewMode === 'selling'
-                                ? (entry.actualProfit ?? entry.expectedProfit)
-                                : (grossRevenue - entry.totalCost);
+                              const realizedPrice = unitPrice * (viewMode === 'selling' ? 0.95 : 1.0);
+                              const revenue = count * realizedPrice;
+                              const profit = revenue - entry.totalCost;
 
                               return (
                               <tr key={entry.id} className="hover:bg-white/5 transition-colors border-b border-[var(--border-color)] whitespace-nowrap">
@@ -318,7 +332,7 @@ export default function HistoryView({ history, onDelete, onClear, onUpdateEntry 
                                       <div className="flex flex-col items-center gap-0.5">
                                           <div className="flex items-center gap-1 justify-center w-full">
                                             <span className="text-[10px] text-slate-400 tracking-tight">
-                                                {entry.outputs.marketPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} x
+                                                {unitPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} x
                                             </span>
                                             {editingId === entry.id ? (
                                                 <input 

@@ -14,6 +14,7 @@ export interface CraftingState {
   hourlyCostSnapshot?: number;
   hourlySellingRevenuePerItemSnapshot?: number;
   hourlyUsageRevenuePerItemSnapshot?: number;
+  timeCoef?: number;
 }
 
 const DEFAULT_STATE: CraftingState = {
@@ -85,8 +86,9 @@ export function useCraftingTimer(addLog: (msg: string) => void) {
       hourlySellingProfit: number,
       hourlyUsageProfit: number,
       hourlyCost: number,
+      hourlyUsageRevenuePerItem: number,
       hourlySellingRevenuePerItem: number,
-      hourlyUsageRevenuePerItem: number
+      timeCoef: number
   ) => {
     const isNinav = ninavBlessing;
     const concurrency = isNinav ? 4 : 3;
@@ -125,7 +127,8 @@ export function useCraftingTimer(addLog: (msg: string) => void) {
       hourlyUsageProfitSnapshot: hourlyUsageProfit,
       hourlyCostSnapshot: hourlyCost,
       hourlySellingRevenuePerItemSnapshot: hourlySellingRevenuePerItem,
-      hourlyUsageRevenuePerItemSnapshot: hourlyUsageRevenuePerItem
+      hourlyUsageRevenuePerItemSnapshot: hourlyUsageRevenuePerItem,
+      timeCoef
     });
     
     // Also notify valid start

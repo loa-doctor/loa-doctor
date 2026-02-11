@@ -318,8 +318,9 @@ export default function SmartCraftingManager() {
         profitStats?.hourlySellingProfit || 0,
         profitStats?.hourlyUsageProfit || 0,
         profitStats?.hourlyCost || 0,
+        profitStats?.hourlyUsageRevenuePerItem || 0,
         profitStats?.hourlySellingRevenuePerItem || 0,
-        profitStats?.hourlyUsageRevenuePerItem || 0
+        (targetSlots > 0 && BASE_DURATIONS[activeTab]) ? ((isNinav ? 4 : 3) * 3600) / (targetSlots * BASE_DURATIONS[activeTab] * Math.max(0, 1 - (((timeReduction || 0) + (isNinav ? 10 : 0)) / 100))) : 0
      );
   };
 
@@ -365,7 +366,7 @@ export default function SmartCraftingManager() {
 
   // Expose function for PiP
   useEffect(() => {
-    (window as any).startCrafting = () => startCrafting(activeTab, targetSlots, ninavBlessing, timeReduction, 0, 0, 0, 0, 0);
+    (window as any).startCrafting = () => startCrafting(activeTab, targetSlots, ninavBlessing, timeReduction, 0, 0, 0, 0, 0, 0);
     return () => { (window as any).startCrafting = undefined; };
   }, [startCrafting, activeTab, targetSlots, ninavBlessing, timeReduction]);
 
@@ -546,6 +547,10 @@ export default function SmartCraftingManager() {
                   hourlyUsageRevenuePerItemSnapshot={(craftingState.isActive || craftingState.endTime) ? craftingState.hourlyUsageRevenuePerItemSnapshot : profitStats?.hourlyUsageRevenuePerItem}
                   expectedOutput={profitStats?.outputQty || 0}
                   onRecordResult={(count) => handleRecordResult(count, prices, bundleCounts)}
+                  // Pass current prices for real-time calc
+                  currentPrices={prices}
+                  currentBundleCounts={bundleCounts}
+                  timeCoef={craftingState.timeCoef}
                 />
                 </div>
             
@@ -562,6 +567,8 @@ export default function SmartCraftingManager() {
             onDelete={deleteHistory} 
             onClear={clearHistory}
             onUpdateEntry={(id, count) => updateHistoryEntry(id, count)}
+            currentPrices={prices}
+            currentBundleCounts={bundleCounts}
           />
         )}
       </div>
