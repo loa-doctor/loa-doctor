@@ -117,18 +117,46 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
       }
 
       // (B) 급락: 오인식 가능성 체크
+      // -30줄 이상 차이날 때
       if (diff < -30) {
         if (!pendingDropRef.current || Math.abs(pendingDropRef.current.val - currentLine) > 5) {
+          // 새로운 급락 발생 -> 일단 대기
           pendingDropRef.current = { val: currentLine, frames: 1 }
         } else {
+          // 급락 값 유지 중
           pendingDropRef.current.frames++
         }
 
-        if (pendingDropRef.current.frames < 3) {
+        // 5프레임 이상 유지되면 "진짜 떨어졌다(Skip)"고 판단
+        if (pendingDropRef.current.frames < 5) {
           return 
         }
+        
+        // --- [Queued Mechanic Detection Logic] ---
+        // 갑작스런 HP 감소가 확정됨.
+        // minLineReachedRef.current (예: 180) -> currentLine (예: 130)
+        // 이 사이에 있는 가이드들을 "Queue"에 넣는다.
+        const skippedGuides = phaseGuides.filter(g => 
+            g.line < minLineReachedRef.current && g.line > currentLine
+        )
+        
+        if (skippedGuides.length > 0) {
+            // Add to queue (Start from highest line)
+            setQueuedGuides(prev => {
+                // Avoid duplicates and merge
+                const newQueue = [...prev]
+                skippedGuides.forEach(g => {
+                    if (!newQueue.find(q => q.line === g.line)) {
+                        newQueue.push(g)
+                    }
+                })
+                return newQueue.sort((a,b) => b.line - a.line) // DESC sort
+            })
+        }
+        
         pendingDropRef.current = null
       } else if (pendingDropRef.current && currentLine > minLineReachedRef.current - 10) {
+        // 급락했다가 다시 원래대로 돌아오면 (오인식 해제)
         pendingDropRef.current = null
       }
 
@@ -137,36 +165,44 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
         minLineReachedRef.current = currentLine
       }
       setFilteredHp(currentLine)
+      
+      // --- [Clear Queue Logic] ---
+      // If HP drops significantly below the *last* queued item, clear it.
+      // e.g. Queue: [170, 145]. Current: 130. 
+      // If Current drops to 110 ( < 145 - 20?), maybe users are done with 145?
+      // Actually user said: "List just shows what was skipped, until we reach next Normal guide".
+      // Let's clear items from queue if currentLine is WAY below them (e.g. -20 lines)
+      // Or simply, we just show them.
+      
+      setQueuedGuides(prev => {
+          if (prev.length === 0) return prev
+          // If current line is smaller than (lowest_queued_line - 10), remove it?
+          // No, user wants to see them.
+          // Let's keep them until manually cleared? No user interaction.
+          // Strategy: Keep them in queue.
+          // If currentLine < upcomingGuide.line (Next Normal), we might switch to Next Normal?
+          // Wait, if 130. Next Normal 115.
+          // If 115 is reached, 170/145 are definitely meaningless?
+          // Yes. If we reach 115 line, we should show 115.
+           
+          // Remove guides from queue if currentLine <= (guide.line - 30) ?
+          // Let's just keep them for now. 
+          // Actually, if we reach the NEXT valid guide (e.g. 115), 
+          // the queue should probably serve its purpose and disappear?
+          // But 115 is "Upcoming".
+          
+          return prev.filter(g => currentLine >= g.line - 50) // Auto-clear if 50 lines passed
+      })
 
-      /* New Guide Logic */
+
+      /* New Guide Logic with Queue */
       // phaseGuides is sorted DESC: [170, 145, 115...]
-      // find upcoming: first guide where currentLine > guide.line
       const upcomingIdx = phaseGuides.findIndex(g => currentLine > g.line)
       
       let active: typeof guidesState.activeGuide = null
       let upcoming: typeof guidesState.upcomingGuide = null
 
-
-
       if (upcomingIdx === -1) {
-          // If not found, it means currentLine <= all guides? (e.g. 0)
-          // or if empty.
-          // If currentLine is very low, usually upcomingIdx is -1 implies we are past everything?
-          // Actually findIndex returns -1 if NO element satisfies.
-          // If currentLine is 10, and guides are [170, 145...], 10 > 170 False...
-          // Wait. 10 > 170 is False. 
-          // logic: `currentLine > g.line` implies we are BEFORE that line.
-          // ex: HP 180. 180 > 170 (True). upcomingIdx = 0 (170).
-          // ex: HP 160. 160 > 170 (False). 160 > 145 (True). upcomingIdx = 1 (145).
-          
-          // If HP 10. 10 > ALL (False? No. 10 > 170 False).
-          // Wait logic check.
-          // 160 > 145 is True.
-          // 10 > 145 is False.
-          
-          // If HP is smaller than ALL lines (End of raid), findIndex returns -1.
-          // In that case, Active is the Last one. Upcoming is None.
-          
           if (phaseGuides.length > 0 && currentLine <= phaseGuides[phaseGuides.length - 1].line) {
              const lastGuide = phaseGuides[phaseGuides.length - 1]
              active = {
@@ -177,7 +213,7 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
              upcoming = null
           }
       } else {
-          // upcoming found
+          // upcoming found (Next Normal)
           const upG = phaseGuides[upcomingIdx]
           upcoming = {
               line: upG.line,
@@ -201,6 +237,14 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
     },
     [phaseGuides, resetSession, selectedRaid, selectedGate, maxLines]
   )
+  
+  const [queuedGuides, setQueuedGuides] = useState<PhaseGuide[]>([])
+
+  // Reset Queue on Session Reset
+  const resetSessionWithQueue = useCallback(() => {
+      resetSession()
+      setQueuedGuides([])
+  }, [resetSession])
 
   return {
     rawHp,
@@ -208,9 +252,11 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
     analysisStatus,
     activeGuide: guidesState.activeGuide,
     upcomingGuide: guidesState.upcomingGuide,
+    queuedGuides, // Export Queue
     handleLineDetected,
-    resetSession,
+    resetSession: resetSessionWithQueue,
     setAnalysisStatus,
     setFilteredHp,
   }
 }
+
