@@ -59,6 +59,7 @@ const OverlayContent = ({
     onStop,
     isDebugOverlay, // New Prop
     captureRef,     // New Prop
+    queuedGuides = [], // New Prop
 }: any) => {
     const rootRef = useRef<HTMLDivElement>(null)
     const [isSelectionMode, setIsSelectionMode] = useState(false)
@@ -285,6 +286,33 @@ const OverlayContent = ({
 
                    {/* Guides: Fill the remaining space */}
                    <div className="flex flex-col flex-1 p-4 gap-3 shrink-0 box-border overflow-hidden pb-[60px]">
+                       {/* Queued Guides Alert */}
+                       {queuedGuides.length > 0 && (
+                           <div className="flex flex-col gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl relative overflow-hidden">
+                               <div className="absolute top-0 left-0 w-1 h-full bg-yellow-500/50" />
+                               <div className="flex items-center gap-2 mb-1">
+                                   <span className="text-[10px] font-black bg-yellow-500 text-black px-1.5 rounded uppercase flicker-animation">
+                                       SKIP DETECTED
+                                   </span>
+                                   <span className="text-[11px] font-bold text-yellow-200">
+                                       딜이 빨라서 패턴이 밀렸습니다!
+                                   </span>
+                               </div>
+                               <div className="flex flex-col gap-1.5 pl-1">
+                                   {queuedGuides.map((guide: any, idx: number) => (
+                                       <div key={idx} className="flex items-start gap-2 text-slate-300">
+                                           <span className="text-[11px] font-bold text-white shrink-0 mt-0.5">
+                                               {guide.line}줄:
+                                           </span>
+                                           <span className="text-[11px] leading-snug break-keep">
+                                               {guide.phase} <span className="text-slate-500">({guide.hint})</span>
+                                           </span>
+                                       </div>
+                                   ))}
+                               </div>
+                           </div>
+                       )}
+                       
                        {activeGuide && <GuideBlock guide={activeGuide} type="ACTIVE" />}
                        {upcomingGuide && <GuideBlock guide={upcomingGuide} type="NEXT" />}
                    </div>
@@ -326,6 +354,8 @@ const OverlayContent = ({
                                </svg>
                            </button>
                        </div>
+
+
 
                        {onNextGate && (
                            <button 
@@ -488,11 +518,14 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
     analysisStatus,
     activeGuide,
     upcomingGuide,
+    queuedGuides, // New State
     handleLineDetected: onLineDetectedOriginal,
     resetSession,
     setAnalysisStatus,
     setFilteredHp,
   } = useRaidAnalysis({ phaseGuides, selectedRaid, selectedGate, maxLines: selectedMaxLines })
+
+
 
   const handleLineDetected = useCallback((line: number | null, confidence?: number) => {
       // Logic Control
@@ -858,6 +891,7 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
             onStop={handleStopAnalysis}
             isDebugOverlay={isDebugOverlay}
             captureRef={captureRef}
+            queuedGuides={queuedGuides}
         />,
         pipWindow.document.body
     )}
