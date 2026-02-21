@@ -26,9 +26,10 @@ router.get('/', async (_, res) => {
 
       diffWithGates.push({
         name: diff.name,
-        gates: gates.map(g => ({
+        gates: gates.map((g: any) => ({
           _id: g._id,
           name: g.name,
+          gateNumber: g.gateNumber,
           maxLines: g.maxLines || 0,
         })),
       })
@@ -36,6 +37,7 @@ router.get('/', async (_, res) => {
 
     result.push({
       name: boss.name,
+      shortName: boss.shortName,
       category: boss.category || '기타', // Include Category
       difficulties: diffWithGates,
     })

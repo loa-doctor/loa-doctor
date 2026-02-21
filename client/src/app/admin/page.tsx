@@ -210,8 +210,15 @@ export default function AdminPage() {
     if (!guideBoss || !guideDiff || !guideGate) return
 
     try {
-        const gateNum = guideGate.replace(/관문/g, '') // "1관문" -> "1"
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/guides?boss=${guideBoss}&difficulty=${guideDiff}&gate=${gateNum}`)
+        const boss = raidStructure.find(r => r.name === guideBoss)
+        const diff = boss?.difficulties.find((d: any) => d.name === guideDiff)
+        const gateObj = diff?.gates.find((g: any) => g.name === guideGate)
+        const gateNum = gateObj ? gateObj.gateNumber : guideGate.replace(/관문/g, '')
+
+        const encodedBoss = encodeURIComponent(guideBoss)
+        const encodedDiff = encodeURIComponent(guideDiff)
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/raids/guides?boss=${encodedBoss}&difficulty=${encodedDiff}&gate=${gateNum}`)
         const data = await res.json()
         setGuideList(data)
     } catch (e) {
@@ -225,7 +232,10 @@ export default function AdminPage() {
 
   const handleSaveGuide = async () => {
       try {
-          const gateNum = guideGate.replace(/관문/g, '')
+          const boss = raidStructure.find(r => r.name === guideBoss)
+          const diff = boss?.difficulties.find((d: any) => d.name === guideDiff)
+          const gateObj = diff?.gates.find((g: any) => g.name === guideGate)
+          const gateNum = gateObj ? gateObj.gateNumber : guideGate.replace(/관문/g, '')
           
           let url = `${process.env.NEXT_PUBLIC_API_BASE}/api/raids/admin/guide`
           let method = 'POST'
@@ -565,10 +575,9 @@ export default function AdminPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h4 className="font-bold text-slate-200 mb-1">{guide.phase}</h4>
-                                    <p className="text-xs text-slate-400 leading-relaxed">{guide.hint}</p>
-
+                                    <p className="text-xs text-slate-400 leading-relaxed max-w-full break-all whitespace-pre-wrap">{guide.hint}</p>
                                 </div>
-                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                                     <button onClick={() => handleEdit(guide)} className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-xs text-slate-300">수정</button>
                                     <button onClick={() => handleDeleteGuide(guide._id)} className="px-3 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-xs text-red-500">삭제</button>
                                 </div>

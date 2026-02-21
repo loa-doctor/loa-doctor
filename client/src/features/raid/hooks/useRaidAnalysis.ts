@@ -114,6 +114,16 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
         if (stabilityRef.current.count < 3) {
           return 
         }
+
+        // 역행 안정화 발동 시 특수 페이즈 전환(발악 패턴 진입 등) 대응
+        if (phaseGuides.length > 0) {
+            const lastGuide = phaseGuides[phaseGuides.length - 1]
+            // 만약 이미 마지막 기믹(0줄 등) 근처(<15줄)까지 왔었는데 갑자기 피가 크게 차올랐다면 (0줄->44줄 맵이동 등)
+            // 0줄 텍스트 미표시 / 순식간에 지나가서 인식을 못 한 상태로 맵이 바뀐 특수 상황임
+            if (minLineReachedRef.current <= lastGuide.line + 15 && currentLine > lastGuide.line + 20) {
+                minLineReachedRef.current = lastGuide.line // 마지막 기믹(0줄)에 도달한 것으로 강제 확정
+            }
+        }
       }
 
       // (B) 급락: 오인식 가능성 체크
@@ -197,13 +207,14 @@ export const useRaidAnalysis = ({ phaseGuides, selectedRaid, selectedGate, maxLi
 
       /* New Guide Logic with Queue */
       // phaseGuides is sorted DESC: [170, 145, 115...]
-      const upcomingIdx = phaseGuides.findIndex(g => currentLine > g.line)
+      const effectiveLine = minLineReachedRef.current
+      const upcomingIdx = phaseGuides.findIndex(g => effectiveLine > g.line)
       
       let active: typeof guidesState.activeGuide = null
       let upcoming: typeof guidesState.upcomingGuide = null
 
       if (upcomingIdx === -1) {
-          if (phaseGuides.length > 0 && currentLine <= phaseGuides[phaseGuides.length - 1].line) {
+          if (phaseGuides.length > 0 && effectiveLine <= phaseGuides[phaseGuides.length - 1].line) {
              const lastGuide = phaseGuides[phaseGuides.length - 1]
              active = {
                  line: lastGuide.line,

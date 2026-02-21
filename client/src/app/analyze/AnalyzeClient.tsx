@@ -178,9 +178,11 @@ const OverlayContent = ({
            {/* Header */}
            <div className="flex items-center justify-between px-5 py-3 bg-[#141417] border-b border-white/5 h-[48px] shrink-0 box-border relative z-20">
               <div className="flex items-center gap-3">
-                  <div className="flex flex-col">
+              <div className="flex flex-col">
                     <span className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">RAID MONITOR</span>
-                    <span className="text-[13px] font-bold text-white/90">{selectedRaid.split(':')[0].trim()} {selectedGate}</span>
+                    <span className="text-[13px] font-bold text-white/90">
+                      {raids.find((r: any) => r.name === selectedRaid)?.shortName || selectedRaid} {selectedGate}
+                    </span>
                   </div>
                   {/* Collapse Toggle */}
 
@@ -253,7 +255,7 @@ const OverlayContent = ({
                                    }}
                                    className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-slate-200 outline-none"
                                >
-                                   {raids.map((r: any) => <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">{r.name.split(':')[0].trim()}</option>)}
+                                   {raids.map((r: any) => <option key={r.name} value={r.name} className="bg-[#141417] text-[#e2e8f0]">{r.shortName || r.name}</option>)}
                                </select>
                                <select 
                                    value={tempDiff} 
@@ -439,7 +441,6 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
   const [showDebugControls, setShowDebugControls] = useState(false)
   const [isDebugOverlay, setIsDebugOverlay] = useState(false) // Whether current session is debug mode
 
-  // Initialization fixed to prevent Hydration Error
   const [selectedRaid, setSelectedRaid] = useState(raids.length > 0 ? raids[0].name : '1막 : 대지를 부수는 업화의 궤적')
   const [selectedDifficulty, setSelectedDifficulty] = useState('노말')
   const [selectedGate, setSelectedGate] = useState('1관문')
@@ -537,8 +538,13 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
 
   useEffect(() => {
     if (!selectedGate) return
-    const gateNumber = Number(selectedGate.replace(/[^0-9]/g, ''))
     
+    // Find the actual gate object to get its correct gateNumber
+    const r = raids.find(r => r.name === selectedRaid)
+    const d = r?.difficulties.find(d => d.name === selectedDifficulty)
+    const gObj = d?.gates.find(g => g.name === selectedGate)
+    const gateNumber = gObj ? gObj.gateNumber : Number(selectedGate.replace(/[^0-9]/g, ''))
+
     // Cache Key (Version 2)
     const cacheKey = `loa-doctor:guides:v2:${selectedRaid}:${selectedDifficulty}:${gateNumber}`
 
@@ -561,8 +567,11 @@ export default function AnalyzeClient({ raids }: { raids: Raid[] }) {
 
     // 2. Background Fetch (Stale-While-Revalidate)
     // Always fetch to check for updates from Admin
+    const eRaid = encodeURIComponent(selectedRaid)
+    const eDiff = encodeURIComponent(selectedDifficulty)
+
     fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE}/api/raids/guides?boss=${selectedRaid}&difficulty=${selectedDifficulty}&gate=${gateNumber}`
+      `${process.env.NEXT_PUBLIC_API_BASE}/api/raids/guides?boss=${eRaid}&difficulty=${eDiff}&gate=${gateNumber}`
     )
       .then(res => {
           if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
