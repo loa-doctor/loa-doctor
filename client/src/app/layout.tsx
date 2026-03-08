@@ -1,4 +1,3 @@
-import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import './globals.css'
 import type { ReactNode } from 'react'
@@ -12,7 +11,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="bg-black text-white font-[Pretendard]">
         <Header />
         {children}
-        <Footer />
       </body>
     </html>
   )

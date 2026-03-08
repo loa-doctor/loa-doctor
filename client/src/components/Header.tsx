@@ -20,15 +20,18 @@ export const Header = () => {
 
         <div className="flex items-center gap-6 pl-12 text-sm text-slate-300">
           {process.env.NEXT_PUBLIC_APP_ENV === 'local' && (
-            <button onClick={() => router.push('/admin')} className="hover:text-white transition">
+            <button onClick={() => router.push('/admin')} className={`hover:text-white transition ${pathname === '/admin' ? 'text-[var(--color-primary)] font-bold' : ''}`}>
               Admin
             </button>
           )}
-          <button onClick={() => router.push('/analyze')} className="hover:text-white transition">
+          <button onClick={() => router.push('/analyze')} className={`hover:text-white transition ${pathname === '/analyze' ? 'text-[var(--color-primary)] font-bold' : ''}`}>
             Analyze
           </button>
-          <button onClick={() => router.push('/smart-crafting')} className="hover:text-white transition">
+          <button onClick={() => router.push('/smart-crafting')} className={`hover:text-white transition ${pathname === '/smart-crafting' ? 'text-[var(--color-primary)] font-bold' : ''}`}>
             스마트 제작 관리자
+          </button>
+          <button onClick={() => router.push('/gem-efficiency')} className={`hover:text-white transition ${pathname === '/gem-efficiency' ? 'text-[var(--color-primary)] font-bold' : ''}`}>
+            보석 효율 계산기
           </button>
         </div>
         <div className="flex justify-end">

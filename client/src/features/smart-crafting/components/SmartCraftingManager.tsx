@@ -95,6 +95,12 @@ export default function SmartCraftingManager() {
   // Load from local storage
   useEffect(() => {
     const saved = localStorage.getItem('matCalcData');
+    const sharedApiKey = localStorage.getItem('loa_api_key');
+    
+    if (sharedApiKey) {
+      setApiKey(sharedApiKey);
+    }
+
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -103,7 +109,10 @@ export default function SmartCraftingManager() {
         setOwnedUncommon(Number(data.ownedUncommon) || 0);
         setOwnedCommon(Number(data.ownedCommon) || 0);
         if (data.activeTab) setActiveTab(data.activeTab);
-        if (data.apiKey) setApiKey(data.apiKey);
+        if (!sharedApiKey && data.apiKey) {
+            setApiKey(data.apiKey);
+            localStorage.setItem('loa_api_key', data.apiKey);
+        }
         if (typeof data.costReduction === 'number') setCostReduction(data.costReduction);
         if (typeof data.greatSuccessChance === 'number') setGreatSuccessChance(data.greatSuccessChance);
         if (typeof data.ninavBlessing === 'boolean') setNinavBlessing(data.ninavBlessing);
@@ -111,7 +120,7 @@ export default function SmartCraftingManager() {
         if (data.history) setHistory(data.history);
         
         // Auto-start if all configuration is present
-        if (data.apiKey && 
+        if ((sharedApiKey || data.apiKey) && 
             typeof data.costReduction === 'number' && 
             typeof data.greatSuccessChance === 'number' && 
             typeof data.timeReduction === 'number') {
@@ -129,6 +138,10 @@ export default function SmartCraftingManager() {
   // Save to local storage
   useEffect(() => {
     if (!isInitialized) return;
+
+    if (apiKey) {
+        localStorage.setItem('loa_api_key', apiKey);
+    }
 
     const data = { 
         targetSlots, 

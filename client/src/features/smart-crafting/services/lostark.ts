@@ -64,6 +64,72 @@ export class LostArkService {
     }
   }
 
+  static async getAuctionPrice(apiKey: string, itemName: string, itemTier: number, categoryCode: number, optionName?: string): Promise<{ price: number } | null> {
+    try {
+      console.log(`[API] Searching Auction for ${itemName} (Tier: ${itemTier}, Category: ${categoryCode})...`);
+      
+      const searchOptions: any = {
+        Sort: "BUY_PRICE",
+        CategoryCode: categoryCode,
+        ItemTier: itemTier,
+        ItemName: itemName,
+        PageNo: 1,
+        SortCondition: "ASC"
+      };
+
+      if (optionName) {
+         searchOptions.SkillOptions = [
+            {
+               FirstOption: null,
+               SecondOption: null,
+               MinValue: null,
+               MaxValue: null
+            }
+         ];
+      }
+
+      const response = await fetch(`${this.BASE_URL}/auctions/items`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchOptions)
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`[API] Auction Response for ${itemName}:`, data);
+
+      const items = data.Items || [];
+      
+      // We want the absolute cheapest buyout price across all items returned.
+      // Usually, since we sort by BUY_PRICE ASC, the first item with an AuctionInfo.BuyPrice is the one.
+      const validItems = items.filter((i: any) => i.AuctionInfo && i.AuctionInfo.BuyPrice && i.AuctionInfo.BuyPrice > 0);
+      
+      let bestItem = validItems[0];
+
+      // If optionName is provided, we might want to filter by item name to be safe since gems might be weird.
+      if (optionName && validItems.length > 0) {
+         bestItem = validItems.find((i: any) => i.Name.includes(optionName)) || validItems[0];
+      }
+
+      if (bestItem) {
+        return {
+           price: bestItem.AuctionInfo.BuyPrice,
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Failed to fetch auction price:", error);
+      throw error;
+    }
+  }
+
   static async searchItems(apiKey: string, itemName: string): Promise<any> {
     try {
         const response = await fetch(`${this.BASE_URL}/markets/items`, {
