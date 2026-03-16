@@ -24,27 +24,27 @@ export default function HomePage() {
       {/* 네비게이션 바 */}
       <main className="max-w-6xl mx-auto px-6 pt-20 pb-16">
         <div className="flex flex-col items-center text-center mb-16">
-          <div className="inline-block px-4 py-1.5 mb-6 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-medium">
-            실시간 로스트아크 레이드 공략
+          <div className="inline-block px-4 py-1.5 mb-6 rounded-full border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-sm font-medium">
+            로스트아크 스마트 도우미
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight">
-            레이드 공략을 <br />
-            <span className="text-blue-500">실시간</span>으로 확인하세요
+            스마트 제작 & 보석 효율을 <br />
+            <span className="text-[var(--color-primary)]">한눈에</span> 확인하세요
           </h1>
 
           <p className="text-lg text-slate-400 mb-10 max-w-2xl leading-relaxed">
-            LOA Doctor는 보스의 체력을 실시간으로 분석하여, <br />
-            다음 기믹과 공략 정보를 즉시 표시합니다. <br />
-            기믹을 놓치지 않고 완벽한 공략을 경험하세요!
+            API 기반의 정확한 시세 정보 연동으로 <br />
+            제작 및 보석 합성 이익을 손쉽게 계산할 수 있습니다. <br />
+            LOA Doctor와 함께 스마트한 게임을 즐겨보세요!
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
-              href="/analyze"
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-lg transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+              href="/gem-efficiency"
+              className="px-8 py-4 bg-[var(--color-primary)] hover:opacity-90 rounded-xl font-bold text-lg transition-all shadow-lg active:scale-95"
             >
-              지금 시작하기
+              보석 효율 계산기
             </Link>
             <Link
               href="/smart-crafting"
@@ -53,10 +53,20 @@ export default function HomePage() {
               스마트 제작 관리자
             </Link>
           </div>
+          {process.env.NEXT_PUBLIC_ENABLE_ANALYZE === 'true' && (
+             <div className="mt-8">
+               <Link
+                 href="/analyze"
+                 className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-600/30 hover:bg-blue-600/30 rounded-lg text-sm transition-all"
+               >
+                 레이드 공략 (관리자 전용)
+               </Link>
+             </div>
+          )}
         </div>
 
         {/* 시스템 진단 섹션 (기존 코드 기능 통합) */}
-        {process.env.NEXT_PUBLIC_APP_ENV === 'local' && <ApiChecker status={status}/>}
+        {process.env.NEXT_PUBLIC_ENABLE_ANALYZE === 'true' && process.env.NEXT_PUBLIC_APP_ENV === 'local' && <ApiChecker status={status}/>}
       </main>
     </div>
   )

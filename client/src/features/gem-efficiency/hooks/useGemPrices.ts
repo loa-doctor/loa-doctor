@@ -18,6 +18,8 @@ export function useGemPrices(apiKey: string) {
     const [logs, setLogs] = useState<string[]>([]);
     const [apiError, setApiError] = useState<string | null>(null);
 
+    const abortControllerRef = useRef<AbortController | null>(null);
+
     const addLog = useCallback((msg: string) => {
         const timestamp = new Date().toLocaleTimeString();
         setLogs(prev => [`[${timestamp}] ${msg}`, ...prev]);
@@ -25,6 +27,12 @@ export function useGemPrices(apiKey: string) {
 
     const fetchPrices = useCallback(async (currentKey: string, isBackground: boolean = false) => {
         if (!currentKey) return;
+        
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        const abortController = new AbortController();
+        abortControllerRef.current = abortController;
         
         setApiError(null);
         if (!isBackground) setIsPriceLoaded(false);
@@ -56,6 +64,7 @@ export function useGemPrices(apiKey: string) {
                    
                    // Rate Limiting per request to prevent HTTP 429
                    await new Promise(resolve => setTimeout(resolve, 100));
+                   if (abortController.signal.aborted) return;
 
                    try {
                        const result = await LostArkService.getAuctionPrice(cleanKey, itemName, 4, GEM_CATEGORY_CODE, name);
@@ -69,14 +78,19 @@ export function useGemPrices(apiKey: string) {
                        const errMsg = e instanceof Error ? e.message : String(e);
                        addLog(`[에러] ${itemName}: ${errMsg}`);
                        if (errMsg.includes('401') || errMsg.includes('403')) {
-                           throw new Error("API Key 인증 실패 (401/403)");
+                           setApiError("API Key 인증 실패 (401/403)");
+                           setIsLoading(false);
+                           return; // Early return to stop fetching
                        }
                        if (errMsg.includes('429')) {
-                           throw new Error("API 요청 한도 초과 (429)");
+                           setApiError("API 요청 한도 초과 (429)");
+                           setIsLoading(false);
+                           return; // Early return to stop fetching
                        }
                    }
                }
             }
+            if (abortController.signal.aborted) return;
 
             setPrices(prev => {
                 // Merge properly
@@ -119,6 +133,7 @@ export function useGemPrices(apiKey: string) {
         return () => {
             clearTimeout(timeoutId);
             if (intervalRef.current) clearInterval(intervalRef.current);
+            if (abortControllerRef.current) abortControllerRef.current.abort();
         };
     }, [apiKey, fetchPrices]);
 

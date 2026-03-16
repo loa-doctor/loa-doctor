@@ -24,9 +24,11 @@ export const Header = () => {
               Admin
             </button>
           )}
-          <button onClick={() => router.push('/analyze')} className={`hover:text-white transition ${pathname === '/analyze' ? 'text-[var(--color-primary)] font-bold' : ''}`}>
-            Analyze
-          </button>
+          {process.env.NEXT_PUBLIC_ENABLE_ANALYZE === 'true' && (
+            <button onClick={() => router.push('/analyze')} className={`hover:text-white transition ${pathname === '/analyze' ? 'text-[var(--color-primary)] font-bold' : ''}`}>
+              Analyze
+            </button>
+          )}
           <button onClick={() => router.push('/smart-crafting')} className={`hover:text-white transition ${pathname === '/smart-crafting' ? 'text-[var(--color-primary)] font-bold' : ''}`}>
             스마트 제작 관리자
           </button>

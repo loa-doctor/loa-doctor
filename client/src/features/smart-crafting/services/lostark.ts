@@ -125,7 +125,6 @@ export class LostArkService {
       
       return null;
     } catch (error) {
-      console.error("Failed to fetch auction price:", error);
       throw error;
     }
   }
@@ -167,7 +166,6 @@ export class LostArkService {
 
         return await response.json();
     } catch (error) {
-        console.error("Search failed:", error);
         throw error;
     }
   }
